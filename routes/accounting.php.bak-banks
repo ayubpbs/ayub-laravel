@@ -1,0 +1,60 @@
+<?php
+
+use App\Http\Controllers\Admin\Accounting as A;
+use App\Http\Middleware\AdminAuth;
+use Illuminate\Support\Facades\Route;
+
+// ===== Accounting (/admin/accounting) =====
+Route::prefix('admin/accounting')->name('admin.accounting.')->middleware(AdminAuth::class)->group(function () {
+
+    Route::get('/', [A\DashboardController::class, 'index'])->name('dashboard');
+
+    Route::prefix('income')->name('income.')->group(function () {
+        Route::get('/', [A\IncomeController::class, 'index'])->name('index');
+        Route::get('create', [A\IncomeController::class, 'create'])->name('create');
+    });
+
+    Route::prefix('expenses')->name('expense.')->group(function () {
+        Route::get('/', [A\ExpenseController::class, 'index'])->name('index');
+        Route::get('create', [A\ExpenseController::class, 'create'])->name('create');
+    });
+
+    Route::prefix('customers')->name('customers.')->group(function () {
+        Route::get('due', [A\CustomerDueController::class, 'due'])->name('due');
+        Route::get('receive-payment', [A\CustomerDueController::class, 'receive'])->name('receive');
+    });
+
+    Route::prefix('suppliers')->name('suppliers.')->group(function () {
+        Route::get('due', [A\SupplierDueController::class, 'due'])->name('due');
+        Route::get('payment', [A\SupplierDueController::class, 'payment'])->name('payment');
+    });
+
+    Route::get('accounts/{type}', [A\AccountController::class, 'show'])
+        ->whereIn('type', ['cash', 'bank', 'bkash', 'nagad'])->name('accounts.show');
+
+    Route::prefix('accounts/{type}')->name('accounts.')->group(function () {
+        Route::post('entries', [A\AccountController::class, 'store'])->where('type', 'cash|bank|bkash|nagad')->name('entries.store');
+        Route::delete('entries/{id}', [A\AccountController::class, 'destroy'])->where('type', 'cash|bank|bkash|nagad')->whereNumber('id')->name('entries.destroy');
+        Route::post('opening', [A\AccountController::class, 'updateOpening'])->where('type', 'cash|bank|bkash|nagad')->name('opening.update');
+    });
+
+    Route::get('transfers', [A\TransferController::class, 'index'])->name('transfers.index');
+    Route::get('ledger', [A\LedgerController::class, 'index'])->name('ledger.index');
+
+    Route::prefix('reports')->name('reports.')->group(function () {
+        $r = A\ReportController::class;
+        Route::get('profit-loss', [$r, 'profitLoss'])->name('profit_loss');
+        Route::get('income', [$r, 'income'])->name('income');
+        Route::get('expense', [$r, 'expense'])->name('expense');
+        Route::get('cash-flow', [$r, 'cashFlow'])->name('cash_flow');
+        Route::get('customer-due', [$r, 'customerDue'])->name('customer_due');
+        Route::get('supplier-due', [$r, 'supplierDue'])->name('supplier_due');
+    });
+
+    Route::prefix('categories')->name('categories.')->group(function () {
+        Route::get('income', [A\CategoryController::class, 'income'])->name('income');
+        Route::get('expense', [A\CategoryController::class, 'expense'])->name('expense');
+    });
+
+    Route::get('settings', [A\SettingController::class, 'edit'])->name('settings.edit');
+});
