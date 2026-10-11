@@ -21,13 +21,14 @@ class SettingController extends Controller
             'address'         => config('shop.address'),
             'email'           => config('shop.email'),
             'invoice_note'    => config('shop.invoice_note'),
-            'delivery_charge' => config('shop.delivery_charge'),
+            'delivery_inside_dhaka'  => 80,
+            'delivery_outside_dhaka' => 100,
             'advance_amount'  => 0,
             'warranty_days'   => 0,
         ];
 
         $keys = array_merge(
-            ['shop_name', 'tagline', 'phone', 'whatsapp', 'delivery_charge', 'advance_amount',
+            ['shop_name', 'tagline', 'phone', 'whatsapp', 'delivery_inside_dhaka', 'delivery_outside_dhaka', 'advance_amount',
              'warranty_days', 'warranty_terms', 'invoice_note', 'invoice_terms',
              'address', 'email', 'business_hours', 'trade_license', 'bin_tin', 'about'],
             array_keys(Setting::socials())
@@ -59,7 +60,8 @@ class SettingController extends Controller
             'remove_logo'     => ['nullable', 'boolean'],
             'phone'           => self::PHONE,
             'whatsapp'        => self::PHONE,
-            'delivery_charge' => ['required', 'integer', 'min:0', 'max:100000'],
+            'delivery_inside_dhaka'  => ['required', 'integer', 'min:0', 'max:100000'],
+            'delivery_outside_dhaka' => ['required', 'integer', 'min:0', 'max:100000'],
             'advance_amount'  => ['required', 'integer', 'min:0', 'max:10000000'],
             'warranty_enabled' => ['nullable', 'boolean'],
             'warranty_days'   => ['nullable', 'integer', 'min:0', 'max:3650'],
@@ -106,7 +108,7 @@ class SettingController extends Controller
 
         $save = ['logo' => $logo];
         foreach ([
-            'shop_name', 'tagline', 'phone', 'whatsapp', 'delivery_charge', 'advance_amount', 'warranty_days',
+            'shop_name', 'tagline', 'phone', 'whatsapp', 'delivery_inside_dhaka', 'delivery_outside_dhaka', 'advance_amount', 'warranty_days',
             'warranty_terms', 'invoice_note', 'invoice_terms', 'address', 'email', 'business_hours',
             'trade_license', 'bin_tin', 'about',
         ] as $k) {

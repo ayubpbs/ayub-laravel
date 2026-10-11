@@ -31,6 +31,7 @@
             ['label' => 'Reviews',      'url' => route('admin.reviews.index'), 'on' => request()->routeIs('admin.reviews.*'), 'count' => \App\Models\ProductReview::pendingCount(), 'hot' => true],
         ]],
         ['label' => 'Customers', 'icon' => '👥', 'url' => route('admin.customers.index'), 'on' => request()->routeIs('admin.customers.*')],
+        ['label' => 'Coupons', 'icon' => '🎟️', 'url' => route('admin.coupons.index'), 'on' => request()->routeIs('admin.coupons.*')],
         ['label' => 'Courier', 'icon' => '🚚', 'on' => request()->routeIs('admin.courier.*'), 'children' => [
             ['label' => 'Steadfast', 'url' => route('admin.courier.steadfast'), 'on' => request()->routeIs('admin.courier.steadfast') || request()->routeIs('admin.courier.send*'), 'count' => $readyCount, 'hot' => true],
             ['label' => 'Tracking',  'url' => route('admin.courier.tracking'),  'on' => request()->routeIs('admin.courier.tracking') || request()->routeIs('admin.courier.refresh*')],

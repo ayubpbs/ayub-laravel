@@ -24,6 +24,10 @@ Route::post('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.
 // Checkout & orders
 Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout.show');
 Route::post('/checkout', [CheckoutController::class, 'store'])->middleware('throttle:10,1')->name('checkout.store');
+Route::post('/checkout/qty/{id}', [CheckoutController::class, 'qty'])->whereNumber('id')->name('checkout.qty');
+Route::post('/checkout/remove/{id}', [CheckoutController::class, 'remove'])->whereNumber('id')->name('checkout.remove');
+Route::post('/checkout/coupon', [CheckoutController::class, 'applyCoupon'])->middleware('throttle:20,1')->name('checkout.coupon');
+Route::post('/checkout/coupon/remove', [CheckoutController::class, 'removeCoupon'])->name('checkout.coupon.remove');
 Route::get('/order/success/{id}', [CheckoutController::class, 'success'])->name('order.success');
 
 // Customer's own copy of an invoice: only works with the signed link made in the admin panel
@@ -100,6 +104,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('reviews/{id}/reject', [\App\Http\Controllers\Admin\ReviewController::class, 'reject'])->whereNumber('id')->name('reviews.reject');
         Route::delete('reviews/{id}', [\App\Http\Controllers\Admin\ReviewController::class, 'destroy'])->whereNumber('id')->name('reviews.destroy');
 
+        Route::resource('coupons', \App\Http\Controllers\Admin\CouponController::class)->except(['show']);
         Route::resource('brands', \App\Http\Controllers\Admin\BrandController::class)->except(['show']);
         Route::resource('categories', \App\Http\Controllers\Admin\CategoryController::class)->except(['show']);
     });

@@ -81,8 +81,30 @@ class Cart
         return (int) array_sum(array_column($lines, 'total'));
     }
 
-    public static function delivery(int $subtotal): int
+    /** Delivery charges set in Admin > Settings (defaults: ৳ 80 inside Dhaka, ৳ 100 outside Dhaka) */
+    public static function rates(): array
     {
-        return $subtotal > 0 ? (int) config('shop.delivery_charge', 0) : 0;
+        return [
+            'inside'  => (int) \App\Models\Setting::get('delivery_inside_dhaka', 80),
+            'outside' => (int) \App\Models\Setting::get('delivery_outside_dhaka', 100),
+        ];
+    }
+
+    /** Inside Dhaka = the district "Dhaka"; every other district is outside Dhaka */
+    public static function isInsideDhaka(?string $district): bool
+    {
+        return $district === 'Dhaka';
+    }
+
+    /** The delivery charge depends on the district, so it is 0 until a district is known */
+    public static function delivery(int $subtotal, ?string $district = null): int
+    {
+        if ($subtotal <= 0 || $district === null || $district === '') {
+            return 0;
+        }
+
+        $rates = self::rates();
+
+        return self::isInsideDhaka($district) ? $rates['inside'] : $rates['outside'];
     }
 }

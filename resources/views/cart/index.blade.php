@@ -50,7 +50,7 @@
         <aside class="summary">
           <h2>Order Summary</h2>
           <div class="sum-row"><span>Subtotal</span><span>৳ {{ number_format($subtotal) }}</span></div>
-          <div class="sum-row"><span>Delivery charge</span><span>৳ {{ number_format($delivery) }}</span></div>
+          <div class="sum-row"><span>Delivery charge</span><span>Calculated at checkout</span></div>
           <div class="sum-row sum-total"><span>Total</span><span>৳ {{ number_format($total) }}</span></div>
           <a class="btn-primary btn-block" href="{{ route('checkout.show') }}">Proceed to Checkout</a>
           <a class="continue" href="{{ route('home') }}">← Continue shopping</a>

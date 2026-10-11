@@ -8,7 +8,7 @@
       $waNum = preg_replace('/\D+/', '', (string) config('shop.whatsapp_number'));
       $waLink = $waNum !== '' ? 'https://wa.me/' . $waNum . '?text=' . rawurlencode($waMsg) : null;
   }
-  $delivery     = (int) config('shop.delivery_charge', 0);
+  $rates        = \App\Support\Cart::rates();
   $warrantyOn   = \App\Models\Setting::bool('warranty_enabled', false);
   $warrantyDays = (int) \App\Models\Setting::get('warranty_days', 0);
 @endphp
@@ -88,7 +88,7 @@
   @endif
 
   <ul class="pd-trust">
-    <li>🚚 {{ $delivery > 0 ? 'Delivery charge ৳ ' . number_format($delivery) : 'Free delivery' }}</li>
+    <li>🚚 {{ $rates['inside'] > 0 || $rates['outside'] > 0 ? 'Delivery ৳ ' . number_format($rates['inside']) . ' inside Dhaka · ৳ ' . number_format($rates['outside']) . ' outside Dhaka' : 'Free delivery' }}</li>
     @if ($warrantyOn && $warrantyDays > 0)
       <li>🛡️ {{ $warrantyDays }}-day warranty</li>
     @endif

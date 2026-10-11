@@ -13,6 +13,9 @@
         <dt>Name</dt><dd>{{ $order->name }}</dd>
         <dt>Mobile</dt><dd><a href="tel:{{ $order->phone }}">{{ $order->phone }}</a> · <a class="ad-link" href="{{ route('admin.customers.show', $order->phone) }}">Customer history</a></dd>
         <dt>Address</dt><dd>{{ $order->address }}</dd>
+        @if ($order->district)
+          <dt>District</dt><dd>{{ $order->district }}@if ($order->upazila) · {{ $order->upazila }}@endif @if ($order->city) · {{ $order->city }}@endif</dd>
+        @endif
         @if ($order->note)
           <dt>Note</dt><dd>{{ $order->note }}</dd>
         @endif
@@ -141,6 +144,9 @@
           </tr>
         @endforeach
         <tr><td colspan="3" class="r">Subtotal</td><td class="r">৳ {{ number_format($order->subtotal) }}</td></tr>
+        @if ($order->discount > 0)
+          <tr><td colspan="3" class="r">Discount @if ($order->coupon_code)<span class="ad-st st-confirmed">{{ $order->coupon_code }}</span>@endif</td><td class="r ad-green">− ৳ {{ number_format($order->discount) }}</td></tr>
+        @endif
         <tr><td colspan="3" class="r">Delivery charge</td><td class="r">৳ {{ number_format($order->delivery_charge) }}</td></tr>
         <tr class="ad-total"><td colspan="3" class="r">Total</td><td class="r">৳ {{ number_format($order->total) }}</td></tr>
       </table>

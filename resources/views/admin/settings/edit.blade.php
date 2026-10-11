@@ -61,8 +61,13 @@
     <section class="ad-card" id="st-delivery">
       <h2>🚚 Delivery &amp; Advance</h2>
       <div class="ad-row">
-        <label>Delivery charge (৳) *
-          <input type="number" name="delivery_charge" value="{{ $v['delivery_charge'] }}" min="0" max="100000" step="1" required>
+        <label>Delivery charge — Inside Dhaka (৳) *
+          <input type="number" name="delivery_inside_dhaka" value="{{ $v['delivery_inside_dhaka'] }}" min="0" max="100000" step="1" required>
+          <small>Used when the customer's district is Dhaka.</small>
+        </label>
+        <label>Delivery charge — Outside Dhaka (৳) *
+          <input type="number" name="delivery_outside_dhaka" value="{{ $v['delivery_outside_dhaka'] }}" min="0" max="100000" step="1" required>
+          <small>Used for every other district.</small>
         </label>
         <label>Advance amount (৳) *
           <input type="number" name="advance_amount" value="{{ $v['advance_amount'] }}" min="0" max="10000000" step="1" required>

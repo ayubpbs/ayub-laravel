@@ -3,7 +3,7 @@
   $warrantyOn    = \App\Models\Setting::bool('warranty_enabled', false);
   $warrantyDays  = (int) \App\Models\Setting::get('warranty_days', 0);
   $warrantyTerms = trim((string) \App\Models\Setting::get('warranty_terms', ''));
-  $deliveryFee   = (int) config('shop.delivery_charge', 0);
+  $rates         = \App\Support\Cart::rates();
   $specs         = $product->specs();
   $categoryPath  = collect($crumbs)->pluck('label')->implode(' › ');
 @endphp
@@ -65,7 +65,7 @@
 
   <div class="pd-panel" id="pd-panel-ship" role="tabpanel" aria-labelledby="pd-tab-ship">
     <h3>Delivery &amp; Warranty</h3>
-    <p><strong>Delivery:</strong> {{ $deliveryFee > 0 ? 'Delivery charge is ৳ ' . number_format($deliveryFee) . ' per order.' : 'No delivery charge.' }}</p>
+    <p><strong>Delivery:</strong> {{ $rates['inside'] > 0 || $rates['outside'] > 0 ? 'Delivery charge is ৳ ' . number_format($rates['inside']) . ' inside Dhaka and ৳ ' . number_format($rates['outside']) . ' outside Dhaka, per order.' : 'No delivery charge.' }}</p>
     @if ($warrantyOn && $warrantyDays > 0)
       <p><strong>Warranty:</strong> {{ $warrantyDays }} days.</p>
     @endif

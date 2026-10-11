@@ -146,6 +146,9 @@
 
     <table class="totals">
       <tr><td>Subtotal</td><td class="r">৳ {{ number_format($o->subtotal) }}</td></tr>
+      @if ($o->discount > 0)
+        <tr><td>Discount{{ $o->coupon_code ? ' (' . $o->coupon_code . ')' : '' }}</td><td class="r">− ৳ {{ number_format($o->discount) }}</td></tr>
+      @endif
       <tr><td>Delivery charge</td><td class="r">৳ {{ number_format($o->delivery_charge) }}</td></tr>
       <tr class="grand"><td>Total</td><td class="r">৳ {{ number_format($o->total) }}</td></tr>
       <tr><td>Paid</td><td class="r">৳ {{ number_format(max(0, $net)) }}</td></tr>

@@ -18,6 +18,9 @@
           </div>
         @endforeach
         <hr>
+        @if ($order->discount > 0)
+          <div class="sum-row"><span>Discount{{ $order->coupon_code ? ' (' . $order->coupon_code . ')' : '' }}</span><span>− ৳ {{ number_format($order->discount) }}</span></div>
+        @endif
         <div class="sum-row"><span>Delivery charge</span><span>৳ {{ number_format($order->delivery_charge) }}</span></div>
         <div class="sum-row sum-total"><span>Total (cash on delivery)</span><span>৳ {{ number_format($order->total) }}</span></div>
         <p class="addr">📍 {{ $order->address }}</p>

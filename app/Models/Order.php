@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\DB;
 class Order extends Model
 {
     protected $fillable = [
-        'name', 'phone', 'address', 'note',
-        'subtotal', 'delivery_charge', 'total', 'status',
+        'name', 'phone', 'district', 'upazila', 'city', 'address', 'note',
+        'subtotal', 'coupon_code', 'discount', 'delivery_charge', 'total', 'status',
         'courier', 'consignment_id', 'tracking_code', 'courier_status',
         'courier_sent_at', 'courier_checked_at', 'return_requested_at',
     ];
