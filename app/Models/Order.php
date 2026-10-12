@@ -10,8 +10,10 @@ class Order extends Model
     protected $fillable = [
         'name', 'phone', 'district', 'upazila', 'city', 'address', 'note',
         'subtotal', 'coupon_code', 'discount', 'delivery_charge', 'total', 'status',
+        'payment_method', 'bkash_amount', 'bkash_trx_id', 'bkash_payment_id',
         'courier', 'consignment_id', 'tracking_code', 'courier_status',
         'courier_sent_at', 'courier_checked_at', 'return_requested_at',
+        'courier_sent_by', 'courier_sent_by_name',
     ];
 
     protected $casts = [
@@ -41,6 +43,31 @@ class Order extends Model
     public function isLocked(): bool
     {
         return in_array($this->status, self::lockedStatuses(), true);
+    }
+
+    // ----- Payment method (chosen at checkout) -----
+
+    public function isBkash(): bool
+    {
+        return $this->payment_method === 'bkash';
+    }
+
+    public function paymentMethodLabel(): string
+    {
+        return $this->isBkash() ? 'bKash' : 'Cash on delivery';
+    }
+
+    /** True once the admin has verified the bKash payment (a payment row exists for it) */
+    public function bkashVerified(): bool
+    {
+        if (!$this->isBkash() || !$this->bkash_payment_id) {
+            return false;
+        }
+        if ($this->relationLoaded('payments')) {
+            return $this->payments->contains('id', $this->bkash_payment_id);
+        }
+
+        return $this->payments()->where('id', $this->bkash_payment_id)->exists();
     }
 
     // ----- Payments -----

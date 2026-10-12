@@ -10,7 +10,7 @@
 <body class="ad-login-body">
   <div class="ad-login">
     <h1>⚙️ {{ config('shop.name') }}</h1>
-    <p class="ad-muted">Admin login</p>
+    <p class="ad-muted">Admin &amp; staff login</p>
 
     @if (session('error'))
       <div class="ad-flash ad-err">{{ session('error') }}</div>

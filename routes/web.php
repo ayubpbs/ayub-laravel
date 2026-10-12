@@ -46,6 +46,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('orders', [\App\Http\Controllers\Admin\OrderController::class, 'index'])->name('orders.index');
         Route::get('orders/{id}', [\App\Http\Controllers\Admin\OrderController::class, 'show'])->name('orders.show');
         Route::post('orders/{id}/status', [\App\Http\Controllers\Admin\OrderController::class, 'status'])->name('orders.status');
+        Route::post('orders/{id}/bkash/verify', [\App\Http\Controllers\Admin\BkashController::class, 'verify'])->whereNumber('id')->name('bkash.verify');
 
         Route::get('customers', [\App\Http\Controllers\Admin\CustomerController::class, 'index'])->name('customers.index');
         Route::get('customers/{phone}', [\App\Http\Controllers\Admin\CustomerController::class, 'show'])->where('phone', '[0-9]+')->name('customers.show');
@@ -112,3 +113,4 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
 // Accounting module
 require __DIR__.'/accounting.php';
+require __DIR__.'/staff.php';

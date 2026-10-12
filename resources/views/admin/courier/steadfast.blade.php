@@ -70,7 +70,7 @@ STEADFAST_SECRET_KEY=your_secret_key</pre>
     @else
       <div class="ad-scroll">
         <table class="ad-table">
-          <tr><th>Order</th><th>Customer</th><th>Consignment</th><th>Tracking code</th><th>Courier status</th><th>Sent</th></tr>
+          <tr><th>Order</th><th>Customer</th><th>Consignment</th><th>Tracking code</th><th>Courier status</th><th>Sent</th><th>Sent by</th></tr>
           @foreach ($recent as $o)
             <tr>
               <td><a href="{{ route('admin.orders.show', $o->id) }}"><strong>#{{ $o->id }}</strong></a></td>
@@ -79,6 +79,7 @@ STEADFAST_SECRET_KEY=your_secret_key</pre>
               <td>{{ $o->tracking_code ?: '—' }}</td>
               <td><span class="ad-st {{ \App\Support\Steadfast::badge($o->courier_status) }}">{{ \App\Support\Steadfast::label($o->courier_status) }}</span></td>
               <td>{{ optional($o->courier_sent_at)->format('d M, h:i A') }}</td>
+              <td>{{ $o->courier_sent_by_name ?: '—' }}</td>
             </tr>
           @endforeach
         </table>

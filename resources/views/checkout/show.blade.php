@@ -12,6 +12,7 @@
   $itemCount   = array_sum(array_column($lines, 'qty'));
   // Policy box is ticked by default; after a failed submit we respect what the customer chose
   $termsChecked = old() ? (bool) old('terms') : true;
+  $payOld       = old('payment_method', 'cod') === 'bkash' ? 'bkash' : 'cod';
 
   // Everything the checkout script needs (district list, charges, current totals)
   $jsData = [
@@ -212,6 +213,28 @@
           <p class="co-coupon-msg" id="co-coupon-msg" role="status" hidden></p>
         </div>
 
+        {{-- Payment method --}}
+        <div class="co-pay @error('payment_method') has-err @enderror @error('bkash_amount') has-err @enderror @error('bkash_trx_id') has-err @enderror">
+          <div class="co-pay-title">Payment method</div>
+          <div class="co-pay-opts">
+            <label class="co-pay-opt {{ $payOld === 'cod' ? 'is-on' : '' }}">
+              <input type="radio" name="payment_method" value="cod" {{ $payOld === 'cod' ? 'checked' : '' }}>
+              <span class="mark"></span><span>Cash on Delivery</span>
+            </label>
+            <label class="co-pay-opt bk {{ $payOld === 'bkash' ? 'is-on' : '' }}">
+              <input type="radio" name="payment_method" value="bkash" {{ $payOld === 'bkash' ? 'checked' : '' }}>
+              <span class="mark"></span><span>bKash</span>
+            </label>
+          </div>
+          <p class="co-pay-sum" id="bk-sum" hidden>
+            <span id="bk-sum-text"></span>
+            <button type="button" id="bk-edit">Edit</button>
+          </p>
+          @error('payment_method')<p class="co-err">{{ $message }}</p>@enderror
+          @error('bkash_amount')<p class="co-err">{{ $message }}</p>@enderror
+          @error('bkash_trx_id')<p class="co-err">{{ $message }}</p>@enderror
+        </div>
+
         {{-- Terms (ticked by default) --}}
         <div class="co-terms @error('terms') has-err @enderror">
           <label class="co-check">
@@ -233,6 +256,53 @@
           <b id="t-btn-total">৳ {{ number_format($subtotal - $discount) }}</b>
         </button>
       </aside>
+
+      {{-- bKash window (small pop-up) --}}
+      <div class="bk-modal" id="bk-modal" role="dialog" aria-modal="true" aria-labelledby="bk-title" hidden>
+        <div class="bk-box">
+          <div class="bk-head">
+            <strong id="bk-title">bKash Payment</strong>
+            <button type="button" class="bk-x" id="bk-close" aria-label="Close">&times;</button>
+          </div>
+          <div class="bk-body">
+            <div class="bk-top">
+              <div class="bk-info">
+                <span class="bk-pill">Send Money</span>
+                <div class="bk-numrow">
+                  <b id="bk-number">{{ $bkash['number'] }}</b>
+                  <button type="button" class="bk-copy" id="bk-copy">Copy</button>
+                </div>
+                <p class="bk-steps">bKash app &rarr; Send Money &rarr; this number (or scan the QR) &rarr; send the amount.</p>
+              </div>
+              <div class="bk-qr">
+                @if ($bkash['qr'])
+                  <img src="{{ $bkash['qr'] }}" alt="bKash QR code">
+                @else
+                  <span>QR code</span>
+                @endif
+              </div>
+            </div>
+
+            <div class="bk-send"><span>Total to send</span><b id="bk-total">৳ {{ number_format($subtotal - $discount) }}</b></div>
+            <p class="bk-hint" id="bk-hint">Select your district first, so the delivery charge is included.</p>
+
+            <div class="bk-fields">
+              <div class="bk-field">
+                <label for="bk-amount">Amount sent (৳) <b>*</b></label>
+                <input id="bk-amount" type="text" inputmode="numeric" name="bkash_amount" value="{{ old('bkash_amount') }}" autocomplete="off" placeholder="e.g. 4080">
+              </div>
+              <div class="bk-field">
+                <label for="bk-trx">Transaction ID <em>(optional)</em></label>
+                <input id="bk-trx" type="text" name="bkash_trx_id" value="{{ old('bkash_trx_id') }}" maxlength="20" autocomplete="off" autocapitalize="characters" placeholder="e.g. 9A1B2C3D4E">
+              </div>
+            </div>
+
+            <p class="bk-msg" id="bk-msg" role="alert" hidden></p>
+            <button type="button" class="bk-confirm" id="bk-confirm">Confirm</button>
+            <p class="bk-note">We will verify your payment shortly. You can confirm with just the amount.</p>
+          </div>
+        </div>
+      </div>
     </form>
   </section>
 

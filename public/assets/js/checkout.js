@@ -95,6 +95,7 @@
     $('t-total').textContent = money(total);
     $('t-btn-total').textContent = money(total);
     flash($('t-total'));
+    bkSync(total);
 
     // delivery zone box next to the city field
     if (charge === null) {
@@ -250,8 +251,138 @@
     }).catch(function () { window.location.reload(); });
   });
 
+  // ---------- Payment method: Cash on Delivery / bKash ----------
+  var radios = form.querySelectorAll('input[name="payment_method"]');
+  var bk = {
+    modal: $('bk-modal'), amount: $('bk-amount'), trx: $('bk-trx'), msg: $('bk-msg'),
+    total: $('bk-total'), hint: $('bk-hint'), sum: $('bk-sum'), sumText: $('bk-sum-text'),
+    confirmed: false,          // the customer pressed Confirm in the bKash window
+    saved: { amount: '', trx: '' },
+    auto: null                 // the amount we filled in ourselves (follows the total until the customer changes it)
+  };
+  state.total = state.subtotal - state.discount;
+
+  function payValue() {
+    var v = 'cod';
+    Array.prototype.forEach.call(radios, function (r) { if (r.checked) v = r.value; });
+    return v;
+  }
+
+  function paintPay() {
+    Array.prototype.forEach.call(radios, function (r) {
+      r.closest('.co-pay-opt').classList.toggle('is-on', r.checked);
+    });
+    bk.sum.hidden = !(payValue() === 'bkash' && bk.confirmed);
+  }
+
+  function setPay(v) {
+    Array.prototype.forEach.call(radios, function (r) { r.checked = (r.value === v); });
+    paintPay();
+  }
+
+  function bkSummary() {
+    var a = parseInt(bk.saved.amount, 10) || 0;
+    bk.sumText.textContent = 'bKash · ' + money(a) + ' sent' + (bk.saved.trx ? ' · TrxID ' + bk.saved.trx : '');
+    paintPay();
+  }
+
+  // called whenever the totals are redrawn
+  function bkSync(total) {
+    state.total = total;
+    bk.total.textContent = money(total);
+    bk.hint.hidden = !!state.district;
+    if (bk.auto !== null && parseInt(bk.amount.value, 10) === bk.auto) {
+      bk.amount.value = total;
+      bk.auto = total;
+      if (bk.confirmed) { bk.saved.amount = String(total); bkSummary(); }
+    }
+  }
+
+  function bkOpen() {
+    bk.msg.hidden = true;
+    if (!bk.amount.value) { bk.amount.value = state.total; bk.auto = state.total; }
+    bk.modal.hidden = false;
+    setTimeout(function () { bk.amount.focus(); bk.amount.select(); }, 30);
+  }
+
+  function bkClose() {
+    bk.modal.hidden = true;
+    if (bk.confirmed) {
+      // leaving without pressing Confirm: keep what was confirmed before
+      bk.amount.value = bk.saved.amount;
+      bk.trx.value = bk.saved.trx;
+    } else {
+      setPay('cod');
+    }
+  }
+
+  function bkConfirm() {
+    var amount = parseInt(bk.amount.value.replace(/[^0-9]/g, ''), 10);
+    var trx = bk.trx.value.replace(/\s+/g, '').toUpperCase();
+
+    if (!(amount > 0)) { bk.msg.textContent = 'Please enter the amount you sent.'; bk.msg.hidden = false; bk.amount.focus(); return; }
+    if (trx && !/^[A-Z0-9]{1,20}$/.test(trx)) { bk.msg.textContent = 'Transaction ID can only have letters and numbers.'; bk.msg.hidden = false; bk.trx.focus(); return; }
+
+    bk.amount.value = amount;
+    bk.trx.value = trx;
+    bk.saved = { amount: String(amount), trx: trx };
+    bk.confirmed = true;
+    bk.modal.hidden = true;
+    setPay('bkash');
+    bkSummary();
+  }
+
+  Array.prototype.forEach.call(radios, function (r) {
+    // "click" (not "change") so pressing bKash again reopens the window
+    r.addEventListener('click', function () {
+      paintPay();
+      if (r.value === 'bkash') bkOpen();
+    });
+  });
+
+  $('bk-confirm').addEventListener('click', bkConfirm);
+  $('bk-close').addEventListener('click', bkClose);
+  $('bk-edit').addEventListener('click', bkOpen);
+  bk.modal.addEventListener('click', function (e) { if (e.target === bk.modal) bkClose(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !bk.modal.hidden) bkClose();
+  });
+  // Enter inside the window confirms the payment details, it must not place the order
+  [bk.amount, bk.trx].forEach(function (el) {
+    el.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); bkConfirm(); } });
+  });
+  bk.amount.addEventListener('input', function () { bk.amount.value = bk.amount.value.replace(/[^0-9]/g, ''); });
+
+  $('bk-copy').addEventListener('click', function () {
+    var btn = $('bk-copy');
+    var num = $('bk-number').textContent.replace(/[^0-9]/g, '');
+    function done() { btn.textContent = 'Copied ✓'; setTimeout(function () { btn.textContent = 'Copy'; }, 1500); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(num).then(done, function () {});
+    } else {
+      var t = document.createElement('textarea');
+      t.value = num; document.body.appendChild(t); t.select();
+      try { document.execCommand('copy'); done(); } catch (err) {}
+      document.body.removeChild(t);
+    }
+  });
+
+  // Coming back after a server-side error with bKash already chosen and an amount filled in
+  if (payValue() === 'bkash') {
+    var oldAmount = parseInt(bk.amount.value, 10);
+    if (oldAmount > 0) {
+      bk.confirmed = true;
+      bk.saved = { amount: String(oldAmount), trx: bk.trx.value };
+      bkSummary();
+    }
+  }
+  paintPay();
+
   // ---------- Place order ----------
-  form.addEventListener('submit', function () {
+  form.addEventListener('submit', function (e) {
+    // bKash chosen but the window was never confirmed: open it instead of placing the order
+    if (payValue() === 'bkash' && !bk.confirmed) { e.preventDefault(); bkOpen(); return; }
+
     var btn = $('co-submit');
     // let the browser finish its own validation first; only lock the button for a valid form
     if (!form.checkValidity()) return;

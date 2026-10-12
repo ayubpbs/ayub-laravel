@@ -96,18 +96,27 @@ class Steadfast
         }
     }
 
-    /** Books a parcel. On success data['consignment'] holds consignment_id and tracking_code. */
-    public static function createOrder(Order $order): array
+    /**
+     * Books a parcel. On success data['consignment'] holds consignment_id and tracking_code.
+     * $sentBy is the staff member's name: it is added to the courier note so it is visible in the Steadfast panel too.
+     */
+    public static function createOrder(Order $order, ?string $sentBy = null): array
     {
         $items = $order->items->map(fn ($i) => $i->title . ' x' . $i->quantity)->implode(', ');
+
+        $note = trim((string) $order->note);
+        if ($sentBy) {
+            $note = trim($note . ($note !== '' ? ' | ' : '') . 'Sent by: ' . $sentBy);
+        }
 
         return self::call('post', '/create_order', array_filter([
             'invoice'           => self::invoice($order),
             'recipient_name'    => $order->name,
             'recipient_phone'   => $order->phone,
             'recipient_address' => $order->address,
-            'cod_amount'        => (int) $order->total,
-            'note'              => $order->note,
+            // only what the courier still has to collect: a verified bKash payment is already paid
+            'cod_amount'        => $order->dueAmount(),
+            'note'              => $note,
             'item_description'  => mb_substr($items, 0, 500),
         ], fn ($v) => $v !== null && $v !== ''));
     }

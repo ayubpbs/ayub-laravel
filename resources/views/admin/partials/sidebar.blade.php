@@ -21,25 +21,25 @@
 
     // The full admin structure. Items with no 'url' are not built yet and show as "Soon".
     $menu = [
-        ['label' => 'Dashboard', 'icon' => '📊', 'url' => route('admin.dashboard'), 'on' => request()->routeIs('admin.dashboard')],
-        ['label' => 'Orders', 'icon' => '🧾', 'on' => request()->routeIs('admin.orders.*'), 'badge' => $oc['pending'] ?? 0, 'children' => $orderChildren],
-        ['label' => 'Products', 'icon' => '📦', 'on' => request()->routeIs('admin.products.*') || request()->routeIs('admin.categories.*') || request()->routeIs('admin.brands.*') || request()->routeIs('admin.reviews.*'), 'badge' => \App\Models\ProductReview::pendingCount(), 'children' => [
+        ['perm' => 'dashboard', 'label' => 'Dashboard', 'icon' => '📊', 'url' => route('admin.dashboard'), 'on' => request()->routeIs('admin.dashboard')],
+        ['perm' => 'orders_view', 'label' => 'Orders', 'icon' => '🧾', 'on' => request()->routeIs('admin.orders.*'), 'badge' => $oc['pending'] ?? 0, 'children' => $orderChildren],
+        ['perm' => 'products', 'label' => 'Products', 'icon' => '📦', 'on' => request()->routeIs('admin.products.*') || request()->routeIs('admin.categories.*') || request()->routeIs('admin.brands.*') || request()->routeIs('admin.reviews.*'), 'badge' => \App\Models\ProductReview::pendingCount(), 'children' => [
             ['label' => 'All Products', 'url' => route('admin.products.index'), 'on' => request()->routeIs('admin.products.index') || request()->routeIs('admin.products.edit')],
             ['label' => 'Add Product',  'url' => route('admin.products.create'), 'on' => request()->routeIs('admin.products.create')],
             ['label' => 'Categories',   'url' => route('admin.categories.index'), 'on' => request()->routeIs('admin.categories.*')],
             ['label' => 'Brands',       'url' => route('admin.brands.index'), 'on' => request()->routeIs('admin.brands.*')],
             ['label' => 'Reviews',      'url' => route('admin.reviews.index'), 'on' => request()->routeIs('admin.reviews.*'), 'count' => \App\Models\ProductReview::pendingCount(), 'hot' => true],
         ]],
-        ['label' => 'Customers', 'icon' => '👥', 'url' => route('admin.customers.index'), 'on' => request()->routeIs('admin.customers.*')],
-        ['label' => 'Coupons', 'icon' => '🎟️', 'url' => route('admin.coupons.index'), 'on' => request()->routeIs('admin.coupons.*')],
-        ['label' => 'Courier', 'icon' => '🚚', 'on' => request()->routeIs('admin.courier.*'), 'children' => [
+        ['perm' => 'customers', 'label' => 'Customers', 'icon' => '👥', 'url' => route('admin.customers.index'), 'on' => request()->routeIs('admin.customers.*')],
+        ['perm' => 'coupons', 'label' => 'Coupons', 'icon' => '🎟️', 'url' => route('admin.coupons.index'), 'on' => request()->routeIs('admin.coupons.*')],
+        ['perm' => 'courier', 'label' => 'Courier', 'icon' => '🚚', 'on' => request()->routeIs('admin.courier.*'), 'children' => [
             ['label' => 'Steadfast', 'url' => route('admin.courier.steadfast'), 'on' => request()->routeIs('admin.courier.steadfast') || request()->routeIs('admin.courier.send*'), 'count' => $readyCount, 'hot' => true],
             ['label' => 'Tracking',  'url' => route('admin.courier.tracking'),  'on' => request()->routeIs('admin.courier.tracking') || request()->routeIs('admin.courier.refresh*')],
             ['label' => 'Returns',   'url' => route('admin.courier.returns'),   'on' => request()->routeIs('admin.courier.returns*')],
         ]],
-        ['label' => 'Payments', 'icon' => '💳', 'url' => route('admin.payments.index'), 'on' => request()->routeIs('admin.payments.*'), 'badge' => $dueOrders],
-        ['label' => 'Invoices', 'icon' => '📄', 'url' => route('admin.invoices.index'), 'on' => request()->routeIs('admin.invoices.*')],
-        ['label' => 'Reports', 'icon' => '📈', 'on' => request()->routeIs('admin.reports.*'), 'children' => [
+        ['perm' => 'payments', 'label' => 'Payments', 'icon' => '💳', 'url' => route('admin.payments.index'), 'on' => request()->routeIs('admin.payments.*'), 'badge' => $dueOrders],
+        ['perm' => 'invoices', 'label' => 'Invoices', 'icon' => '📄', 'url' => route('admin.invoices.index'), 'on' => request()->routeIs('admin.invoices.*')],
+        ['perm' => 'reports', 'label' => 'Reports', 'icon' => '📈', 'on' => request()->routeIs('admin.reports.*'), 'children' => [
             ['label' => 'Daily Sales',         'url' => route('admin.reports.daily'),    'on' => request()->routeIs('admin.reports.daily')],
             ['label' => 'Monthly Sales',       'url' => route('admin.reports.monthly'),  'on' => request()->routeIs('admin.reports.monthly')],
             ['label' => 'Product-wise Sales',  'url' => route('admin.reports.products'), 'on' => request()->routeIs('admin.reports.products')],
@@ -48,11 +48,16 @@
             ['label' => 'Cancelled Orders',    'url' => route('admin.reports.orders', 'cancelled'), 'on' => request()->routeIs('admin.reports.orders') && request()->route('status') === 'cancelled'],
             ['label' => 'Returned Orders',     'url' => route('admin.reports.orders', 'returned'),  'on' => request()->routeIs('admin.reports.orders') && request()->route('status') === 'returned'],
         ]],
-        ['label' => 'Accounting', 'icon' => '💰', 'view' => 'admin.partials.accounting-menu'],
-        ['label' => 'Staff & Permissions', 'icon' => '🛡️'],
-        ['label' => 'Notifications', 'icon' => '🔔', 'url' => route('admin.notifications.index'), 'on' => request()->routeIs('admin.notifications.*'), 'badge' => $unreadNotif],
-        ['label' => 'Settings', 'icon' => '⚙️', 'url' => route('admin.settings.edit'), 'on' => request()->routeIs('admin.settings.*')],
+        ['perm' => 'accounting', 'label' => 'Accounting', 'icon' => '💰', 'view' => 'admin.partials.accounting-menu'],
+        ['perm' => 'owner', 'label' => 'Staff & Permissions', 'icon' => '🛡️', 'url' => \Illuminate\Support\Facades\Route::has('admin.staff.index') ? route('admin.staff.index') : null, 'on' => request()->routeIs('admin.staff.*')],
+        ['perm' => 'orders_view', 'label' => 'Notifications', 'icon' => '🔔', 'url' => route('admin.notifications.index'), 'on' => request()->routeIs('admin.notifications.*'), 'badge' => $unreadNotif],
+        ['perm' => 'owner', 'label' => 'Settings', 'icon' => '⚙️', 'url' => route('admin.settings.edit'), 'on' => request()->routeIs('admin.settings.*')],
     ];
+
+    // Staff only see the menus they were given. The owner sees everything.
+    $menu = array_values(array_filter($menu, fn ($i) => \App\Support\AdminAccess::can($i['perm'] ?? 'owner')));
+    $sbWho = \App\Support\AdminAccess::name();
+    $sbOwner = \App\Support\AdminAccess::isOwner();
 @endphp
 
 <aside class="sb" id="sidebar">
@@ -100,7 +105,11 @@
     @endforeach
   </nav>
 
-  <div class="sb-foot">
+  {{-- who is signed in (the .sb-foot below is one flex row, so this sits above it) --}}
+  <div class="sb-who" style="padding:10px 16px 0;font-size:13px;color:#cbd5e1;border-top:1px solid #1f2937">
+    👤 <strong style="color:#fff">{{ $sbWho }}</strong> <small style="opacity:.7">({{ $sbOwner ? 'Owner' : 'Staff' }})</small>
+  </div>
+  <div class="sb-foot" style="border-top:0">
     <a href="{{ route('home') }}" target="_blank">View site ↗</a>
     <form action="{{ route('admin.logout') }}" method="POST">
       @csrf

@@ -3,6 +3,7 @@
 @section('title', 'Order #' . $order->id)
 
 @section('content')
+  @php $ax = \App\Support\AdminAccess::class; @endphp
   <p class="ad-crumbs"><a href="{{ route('admin.orders.index') }}">← All orders</a></p>
   <h1 class="ad-title">Order #{{ $order->id }} <span class="ad-st st-{{ $order->status }}">{{ $order->statusLabel() }}</span></h1>
 
@@ -11,7 +12,7 @@
       <h2>Customer details</h2>
       <dl class="ad-dl">
         <dt>Name</dt><dd>{{ $order->name }}</dd>
-        <dt>Mobile</dt><dd><a href="tel:{{ $order->phone }}">{{ $order->phone }}</a> · <a class="ad-link" href="{{ route('admin.customers.show', $order->phone) }}">Customer history</a></dd>
+        <dt>Mobile</dt><dd><a href="tel:{{ $order->phone }}">{{ $order->phone }}</a>@if ($ax::can('customers')) · <a class="ad-link" href="{{ route('admin.customers.show', $order->phone) }}">Customer history</a>@endif</dd>
         <dt>Address</dt><dd>{{ $order->address }}</dd>
         @if ($order->district)
           <dt>District</dt><dd>{{ $order->district }}@if ($order->upazila) · {{ $order->upazila }}@endif @if ($order->city) · {{ $order->city }}@endif</dd>
@@ -20,7 +21,7 @@
           <dt>Note</dt><dd>{{ $order->note }}</dd>
         @endif
         <dt>Order time</dt><dd>{{ $order->created_at->format('d M Y, h:i A') }}</dd>
-        <dt>Payment</dt><dd>Cash on delivery</dd>
+        <dt>Payment</dt><dd>{{ $order->paymentMethodLabel() }}</dd>
       </dl>
     </section>
 
@@ -28,6 +29,8 @@
       <h2>Change status</h2>
       @if ($order->isLocked())
         <p class="ad-muted">This order is {{ strtolower($order->statusLabel()) }}, so its status can no longer be changed.</p>
+      @elseif (!$ax::can('orders_manage'))
+        <p class="ad-muted">You do not have permission to change the order status.</p>
       @else
         <form action="{{ route('admin.orders.status', $order->id) }}" method="POST" class="ad-form">
           @csrf
@@ -43,6 +46,35 @@
     </section>
   </div>
 
+  @if ($order->isBkash())
+    @php $bkOk = $order->bkashVerified(); @endphp
+    <section class="ad-card">
+      <div class="ad-card-head">
+        <h2>bKash payment <span class="ad-st {{ $bkOk ? 'st-delivered' : 'st-pending' }}">{{ $bkOk ? 'Verified' : 'Waiting for verification' }}</span></h2>
+      </div>
+
+      <dl class="ad-dl">
+        <dt>Customer says sent</dt><dd>৳ {{ number_format((int) $order->bkash_amount) }}</dd>
+        <dt>Transaction ID</dt><dd>{{ $order->bkash_trx_id ?: 'Not given' }}</dd>
+        <dt>Order total</dt><dd>৳ {{ number_format($order->total) }}</dd>
+      </dl>
+
+      @error('amount')<p class="ad-red" style="margin:10px 0 0">{{ $message }}</p>@enderror
+
+      @if ($bkOk)
+        <p class="ad-muted" style="margin-top:10px">Verified. The payment is listed below and shows on the invoice.</p>
+      @elseif (!$order->isLocked() && $ax::can('payments'))
+        <form action="{{ route('admin.bkash.verify', $order->id) }}" method="POST" class="ad-form" style="margin-top:12px" onsubmit="return confirm('Add this bKash payment to the order and invoice?');">
+          @csrf
+          <label for="bk-amount">Amount received (৳)</label>
+          <input id="bk-amount" type="number" name="amount" value="{{ old('amount', $order->bkash_amount) }}" min="1" step="1" required>
+          <button type="submit" class="ad-btn">✔ Verify &amp; add to invoice</button>
+        </form>
+        <p class="ad-hint">Check the money in your bKash app first. You can correct the amount if it is different. Verifying records it as a payment, so the invoice shows it as Paid. Deleting that payment below puts this back to "Waiting for verification".</p>
+      @endif
+    </section>
+  @endif
+
   @php
     $net  = $order->netPaid();
     $due  = $order->dueAmount();
@@ -51,7 +83,7 @@
   <section class="ad-card">
     <div class="ad-card-head">
       <h2>Payment <span class="ad-st {{ \App\Models\Order::paymentBadge($order->paymentStatus()) }}">{{ $order->paymentLabel() }}</span></h2>
-      @if ($inv)
+      @if ($inv && $ax::can('invoices'))
         <a href="{{ route('admin.invoices.show', $inv->id) }}" target="_blank">🖨 Invoice {{ $inv->number() }}</a>
       @endif
     </div>
@@ -74,11 +106,13 @@
               <td>{{ $p->trx_id ?: '—' }}@if ($p->note)<br><small class="ad-muted">{{ $p->note }}</small>@endif</td>
               <td class="r {{ $p->isRefund() ? 'ad-red' : '' }}">{{ $p->isRefund() ? '−' : '' }}৳ {{ number_format($p->amount) }}</td>
               <td>
+                @if ($ax::can('payments'))
                 <form action="{{ route('admin.payments.destroy', $p->id) }}" method="POST" onsubmit="return confirm('Delete this payment record?');">
                   @csrf
                   @method('DELETE')
                   <button type="submit" class="ad-link ad-del">Delete</button>
                 </form>
+                @endif
               </td>
             </tr>
           @endforeach
@@ -87,6 +121,7 @@
     @endif
 
     <div class="ad-submit" style="margin-top:12px">
+      @if ($ax::can('payments'))
       @if (!$order->isLocked() && $due > 0)
         <form action="{{ route('admin.payments.collect', $order->id) }}" method="POST" onsubmit="return confirm('Record ৳ {{ number_format($due) }} as cash on delivery collected?');">
           @csrf
@@ -96,7 +131,8 @@
       @if (!$order->isLocked() || $net > 0)
         <a class="ad-btn ad-btn-gray" href="{{ route('admin.payments.create', ['order' => $order->id]) }}">Record payment / refund</a>
       @endif
-      @if (!$inv && !$order->isLocked())
+      @endif
+      @if (!$inv && !$order->isLocked() && $ax::can('invoices'))
         <form action="{{ route('admin.invoices.generate', $order->id) }}" method="POST">
           @csrf
           <button type="submit" class="ad-btn ad-btn-gray">Create invoice</button>
@@ -114,17 +150,22 @@
         <dt>Tracking code</dt><dd>{{ $order->tracking_code ?: '—' }}</dd>
         <dt>Courier status</dt><dd><span class="ad-st {{ \App\Support\Steadfast::badge($order->courier_status) }}">{{ \App\Support\Steadfast::label($order->courier_status) }}</span></dd>
         <dt>Sent</dt><dd>{{ optional($order->courier_sent_at)->format('d M Y, h:i A') }}</dd>
+        <dt>Sent by</dt><dd>{{ $order->courier_sent_by_name ?: '—' }}</dd>
       </dl>
-      <form action="{{ route('admin.courier.refresh', $order->id) }}" method="POST" style="margin-top:12px">
-        @csrf
-        <button type="submit" class="ad-btn ad-btn-gray">⟳ Refresh courier status</button>
-      </form>
+      @if ($ax::can('courier'))
+        <form action="{{ route('admin.courier.refresh', $order->id) }}" method="POST" style="margin-top:12px">
+          @csrf
+          <button type="submit" class="ad-btn ad-btn-gray">⟳ Refresh courier status</button>
+        </form>
+      @endif
     @elseif ($order->status === 'confirmed')
       <p class="ad-muted">Not sent to a courier yet.</p>
-      <form action="{{ route('admin.courier.send', $order->id) }}" method="POST" onsubmit="return confirm('Send order #{{ $order->id }} to Steadfast now?');">
-        @csrf
-        <button type="submit" class="ad-btn">🚚 Send to Steadfast</button>
-      </form>
+      @if ($ax::can('courier'))
+        <form action="{{ route('admin.courier.send', $order->id) }}" method="POST" onsubmit="return confirm('Send order #{{ $order->id }} to Steadfast now?');">
+          @csrf
+          <button type="submit" class="ad-btn">🚚 Send to Steadfast</button>
+        </form>
+      @endif
     @else
       <p class="ad-muted">An order can be sent to Steadfast once it is "Confirmed".</p>
     @endif

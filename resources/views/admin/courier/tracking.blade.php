@@ -19,8 +19,14 @@
         <option value="{{ $key }}" {{ $cs === $key ? 'selected' : '' }}>{{ $label }}</option>
       @endforeach
     </select>
+    <select name="by">
+      <option value="">Sent by: anyone</option>
+      @foreach ($senders as $who)
+        <option value="{{ $who }}" {{ $by === $who ? 'selected' : '' }}>{{ $who }}</option>
+      @endforeach
+    </select>
     <button type="submit" class="ad-btn ad-btn-gray">Search</button>
-    @if ($q !== '' || $cs !== '')<a class="ad-btn ad-btn-gray" href="{{ route('admin.courier.tracking') }}">Clear</a>@endif
+    @if ($q !== '' || $cs !== '' || $by !== '')<a class="ad-btn ad-btn-gray" href="{{ route('admin.courier.tracking') }}">Clear</a>@endif
   </form>
 
   <section class="ad-card">
@@ -29,7 +35,7 @@
     @else
       <div class="ad-scroll">
         <table class="ad-table">
-          <tr><th>Order</th><th>Customer</th><th>Consignment</th><th>Tracking code</th><th>Courier status</th><th>Order status</th><th>Last checked</th><th></th></tr>
+          <tr><th>Order</th><th>Customer</th><th>Consignment</th><th>Tracking code</th><th>Courier status</th><th>Order status</th><th>Sent by</th><th>Last checked</th><th></th></tr>
           @foreach ($orders as $o)
             <tr>
               <td><a href="{{ route('admin.orders.show', $o->id) }}"><strong>#{{ $o->id }}</strong></a></td>
@@ -38,6 +44,7 @@
               <td>{{ $o->tracking_code ?: '—' }}</td>
               <td><span class="ad-st {{ \App\Support\Steadfast::badge($o->courier_status) }}">{{ \App\Support\Steadfast::label($o->courier_status) }}</span></td>
               <td><span class="ad-st st-{{ $o->status }}">{{ $o->statusLabel() }}</span></td>
+              <td>{{ $o->courier_sent_by_name ?: '—' }}</td>
               <td>{{ $o->courier_checked_at ? $o->courier_checked_at->diffForHumans() : 'never' }}</td>
               <td>
                 <form action="{{ route('admin.courier.refresh', $o->id) }}" method="POST">

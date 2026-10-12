@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Support\AdminAccess;
 use App\Support\Steadfast;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -79,7 +80,12 @@ class CourierController extends Controller
                 return ['ok' => false, 'message' => 'Order #' . $id . ' must be "Confirmed" before it is sent to the courier.'];
             }
 
-            $res = Steadfast::createOrder($order);
+            // Who is sending it: the owner, or the staff member who is signed in
+            $staff  = AdminAccess::staff();
+            $byId   = $staff ? $staff->id : null;
+            $byName = AdminAccess::name();
+
+            $res = Steadfast::createOrder($order, $staff ? $staff->name : null);
             $c   = $res['data']['consignment'] ?? null;
 
             if (!$res['ok'] || !is_array($c) || empty($c['consignment_id'])) {
@@ -92,6 +98,8 @@ class CourierController extends Controller
                 'tracking_code'   => $c['tracking_code'] ?? null,
                 'courier_status'  => $c['status'] ?? 'in_review',
                 'courier_sent_at' => now(),
+                'courier_sent_by'      => $byId,
+                'courier_sent_by_name' => $byName,
             ]);
             $order->changeStatus('courier_sent');
 
@@ -107,6 +115,7 @@ class CourierController extends Controller
     {
         $q  = trim((string) $request->query('q', ''));
         $st = (string) $request->query('cs', '');
+        $by = trim((string) $request->query('by', ''));
 
         $query = Order::whereNotNull('consignment_id')->latest('courier_sent_at');
 
@@ -125,13 +134,20 @@ class CourierController extends Controller
             $st = '';
         }
 
+        if ($by !== '') {
+            $query->where('courier_sent_by_name', $by);
+        }
+
+        // everyone who has sent a parcel (for the "Sent by" filter)
+        $senders = Order::whereNotNull('courier_sent_by_name')->distinct()->orderBy('courier_sent_by_name')->pluck('courier_sent_by_name');
+
         $orders = $query->paginate(20)->withQueryString();
 
         $activeCount = Order::whereNotNull('consignment_id')->where('status', 'courier_sent')
             ->where(fn ($w) => $w->whereNull('courier_status')->orWhereNotIn('courier_status', Steadfast::FINAL))->count();
 
         return view('admin.courier.tracking', [
-            'orders' => $orders, 'q' => $q, 'cs' => $st, 'activeCount' => $activeCount,
+            'orders' => $orders, 'q' => $q, 'cs' => $st, 'by' => $by, 'senders' => $senders, 'activeCount' => $activeCount,
             'configured' => Steadfast::configured(),
         ]);
     }

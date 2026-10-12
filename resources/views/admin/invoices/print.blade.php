@@ -127,6 +127,7 @@
       <div>
         <div class="lbl">Payment</div>
         <strong>{{ $o->paymentLabel() }}</strong>
+        <br>{{ $o->paymentMethodLabel() }}
         @if ($o->tracking_code)<br>Courier tracking: {{ $o->tracking_code }}@endif
       </div>
     </div>
@@ -153,7 +154,7 @@
       <tr class="grand"><td>Total</td><td class="r">৳ {{ number_format($o->total) }}</td></tr>
       <tr><td>Paid</td><td class="r">৳ {{ number_format(max(0, $net)) }}</td></tr>
       @if ($due > 0)
-        <tr class="due"><td>Due{{ $o->status !== 'delivered' ? ' (cash on delivery)' : '' }}</td><td class="r">৳ {{ number_format($due) }}</td></tr>
+        <tr class="due"><td>Due{{ ($o->status !== 'delivered' && !$o->isBkash()) ? ' (cash on delivery)' : '' }}</td><td class="r">৳ {{ number_format($due) }}</td></tr>
       @endif
     </table>
 

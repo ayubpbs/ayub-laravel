@@ -34,6 +34,7 @@ class CheckoutController extends Controller
             'notice'    => $s['notice'],
             'rates'     => Cart::rates(),
             'locations' => BdLocations::all(),
+            'bkash'     => $this->bkashInfo(),
         ]);
     }
 
@@ -108,7 +109,11 @@ class CheckoutController extends Controller
 
     public function store(Request $request)
     {
-        $request->merge(['phone' => $this->normalizePhone((string) $request->input('phone'))]);
+        $request->merge([
+            'phone'          => $this->normalizePhone((string) $request->input('phone')),
+            'bkash_amount'   => preg_replace('/\D/', '', $this->latinDigits((string) $request->input('bkash_amount'))),
+            'bkash_trx_id'   => strtoupper(preg_replace('/\s+/', '', (string) $request->input('bkash_trx_id'))),
+        ]);
 
         $data = $request->validate([
             'name'     => 'required|string|max:100',
@@ -119,6 +124,10 @@ class CheckoutController extends Controller
             'address'  => 'required|string|max:500',
             'note'     => 'nullable|string|max:500',
             'terms'    => 'accepted',
+            'payment_method' => ['required', Rule::in(['cod', 'bkash'])],
+            // bKash: only the amount is required, the transaction ID is optional (the admin verifies it later)
+            'bkash_amount'   => ['nullable', 'required_if:payment_method,bkash', 'integer', 'min:1', 'max:10000000'],
+            'bkash_trx_id'   => ['nullable', 'string', 'max:20', 'regex:/^[A-Za-z0-9]+$/'],
         ], [
             'name.required'     => 'Please enter your name.',
             'phone.required'    => 'Please enter your mobile number.',
@@ -128,6 +137,12 @@ class CheckoutController extends Controller
             'upazila.required'  => 'Please select your upazila.',
             'city.required'     => 'Please enter your city or town.',
             'address.required'  => 'Please enter your delivery address.',
+            'payment_method.required' => 'Please choose a payment method.',
+            'payment_method.in'       => 'Please choose a valid payment method.',
+            'bkash_amount.required_if' => 'Please enter the amount you sent by bKash.',
+            'bkash_amount.integer'    => 'Please enter the bKash amount in numbers only.',
+            'bkash_amount.min'        => 'Please enter the amount you sent by bKash.',
+            'bkash_trx_id.regex'      => 'Transaction ID can only have letters and numbers.',
             'terms.accepted'    => 'Please accept the Terms & Conditions, Privacy Policy, Return Policy and Delivery Policy to place your order.',
         ]);
 
@@ -140,8 +155,10 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index');
         }
 
+        $isBkash = $data['payment_method'] === 'bkash';
+
         try {
-            $order = DB::transaction(function () use ($data, $cart) {
+            $order = DB::transaction(function () use ($data, $cart, $isBkash) {
                 // Lock the products so stock stays correct if someone else buys at the same time
                 $products = Product::whereIn('id', array_keys($cart))->lockForUpdate()->get()->keyBy('id');
 
@@ -204,6 +221,10 @@ class CheckoutController extends Controller
                     'delivery_charge' => $delivery,
                     'total'           => $subtotal - $discount + $delivery,
                     'status'          => 'pending',
+                    'payment_method'  => $data['payment_method'],
+                    // not a confirmed payment yet: it only counts after the admin verifies it
+                    'bkash_amount'    => $isBkash ? (int) $data['bkash_amount'] : null,
+                    'bkash_trx_id'    => $isBkash ? ($data['bkash_trx_id'] ?: null) : null,
                 ]);
 
                 $order->items()->createMany($rows);
@@ -300,13 +321,29 @@ class CheckoutController extends Controller
         ], $status);
     }
 
-    /** Converts Bengali digits to English, strips spaces, dashes and +88 to give 01XXXXXXXXX */
-    private function normalizePhone(string $phone): string
+    /** bKash number and QR image shown in the checkout bKash window */
+    private function bkashInfo(): array
     {
-        $phone = strtr($phone, [
+        $qr = config('payment.bkash.qr');
+
+        return [
+            'number' => config('payment.bkash.number', '01711-302759'),
+            'qr'     => ($qr && file_exists(public_path($qr))) ? asset($qr) : null,
+        ];
+    }
+
+    private function latinDigits(string $text): string
+    {
+        return strtr($text, [
             '০' => '0', '১' => '1', '২' => '2', '৩' => '3', '৪' => '4',
             '৫' => '5', '৬' => '6', '৭' => '7', '৮' => '8', '৯' => '9',
         ]);
+    }
+
+    /** Converts Bengali digits to English, strips spaces, dashes and +88 to give 01XXXXXXXXX */
+    private function normalizePhone(string $phone): string
+    {
+        $phone = $this->latinDigits($phone);
         $phone = preg_replace('/[\s\-]/', '', $phone);
 
         return preg_replace('/^(\+?88)/', '', $phone);
