@@ -13,7 +13,7 @@ class Product extends Model
         'category_id', 'brand_id', 'title', 'brand', 'description', 'icon', 'image',
         'price', 'old_price', 'badge', 'rating', 'reviews', 'section',
         'stock_quantity', 'is_upcoming', 'is_published', 'published_at', 'video_urls', 'specifications', 'sku',
-        'slug', 'short_description', 'product_type',
+        'slug', 'short_description', 'product_type', 'cost_price',
     ];
 
     protected $casts = [
@@ -227,6 +227,33 @@ class Product extends Model
         }
 
         return (int) $this->stock_quantity <= (int) config('shop.low_stock_threshold', 5) ? 'low' : 'in';
+    }
+
+    /**
+     * What is on the shelf: units, value at buying price (cost), value at selling price,
+     * and how many products have stock but no cost price entered yet (those count as 0 in the value).
+     */
+    public static function stockSummary(): array
+    {
+        $r = static::query()->selectRaw(
+            'COALESCE(SUM(stock_quantity), 0) as units, '
+            . 'COALESCE(SUM(stock_quantity * COALESCE(cost_price, 0)), 0) as cost_value, '
+            . 'COALESCE(SUM(stock_quantity * price), 0) as retail_value, '
+            . 'COALESCE(SUM(CASE WHEN stock_quantity > 0 AND cost_price IS NULL THEN 1 ELSE 0 END), 0) as missing'
+        )->first();
+
+        return [
+            'units'   => (int) $r->units,
+            'value'   => (float) $r->cost_value,
+            'retail'  => (float) $r->retail_value,
+            'missing' => (int) $r->missing,
+        ];
+    }
+
+    /** Whether customers may see the exact number in stock (Website Settings → Stock display). */
+    public static function showStockCount(): bool
+    {
+        return \App\Models\Setting::bool('show_stock_count', true);
     }
 
     /** Short plain-text excerpt of the description (for meta tags). */

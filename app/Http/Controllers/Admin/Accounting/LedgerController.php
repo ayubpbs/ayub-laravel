@@ -74,7 +74,7 @@ class LedgerController extends Controller
     /** source => label */
     public static function sources(): array
     {
-        return ['manual' => 'Manual', 'income' => 'Income', 'expense' => 'Expense', 'transfer' => 'Transfer'];
+        return ['manual' => 'Manual', 'income' => 'Income', 'expense' => 'Expense', 'transfer' => 'Transfer', 'holding' => 'Savings & Loans'];
     }
 
     /**

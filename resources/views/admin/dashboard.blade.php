@@ -13,6 +13,9 @@
     <div class="ad-stat"><span class="n">{{ $stats['orders'] }}</span><span class="l">Total orders</span></div>
     <div class="ad-stat"><span class="n">৳ {{ number_format($stats['delivered']) }}</span><span class="l">Delivered sales</span></div>
     <a class="ad-stat" href="{{ route('admin.products.index') }}"><span class="n">{{ $stats['products'] }}</span><span class="l">Total products</span></a>
+    @if ($stockSummary)
+      <a class="ad-stat" href="{{ route('admin.products.index') }}"><span class="n">৳ {{ number_format($stockSummary['value']) }}</span><span class="l">Stock value (at buying price)</span></a>
+    @endif
   </div>
 
   <div class="ad-two">

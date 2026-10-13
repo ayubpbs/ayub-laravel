@@ -8,7 +8,20 @@
     <a class="ad-btn" href="{{ route('admin.products.create') }}">＋ New Product</a>
   </div>
 
+  @if ($summary)
+    <div class="ad-stats">
+      <div class="ad-stat ad-stat-hot"><span class="n">৳ {{ number_format($summary['value']) }}</span><span class="l">Stock value (at buying price)</span></div>
+      <div class="ad-stat"><span class="n">{{ number_format($summary['units']) }}</span><span class="l">Units in stock</span></div>
+      <div class="ad-stat"><span class="n">৳ {{ number_format($summary['retail']) }}</span><span class="l">Stock value (at selling price)</span></div>
+    </div>
+    @if ($summary['missing'] > 0)
+      <p class="ad-hint" style="margin:0 0 12px">⚠ {{ $summary['missing'] }} product(s) have stock but no buying price, so they are counted as ৳ 0.
+        <a href="{{ route('admin.products.index', ['cost' => 'missing']) }}">Show them</a> and enter their buying price.</p>
+    @endif
+  @endif
+
   <form class="ad-filter" method="GET" action="{{ route('admin.products.index') }}">
+    @if ($cost === 'missing')<input type="hidden" name="cost" value="missing">@endif
     <input type="text" name="q" value="{{ $q }}" placeholder="Search by name, brand or SKU…">
     <select name="category">
       <option value="">All categories</option>
@@ -29,7 +42,7 @@
       <option value="out" {{ $stock === 'out' ? 'selected' : '' }}>Out of stock</option>
     </select>
     <button type="submit" class="ad-btn ad-btn-gray">Search</button>
-    @if ($q !== '' || $cat !== '' || $brand !== '' || $stock !== '')
+    @if ($q !== '' || $cat !== '' || $brand !== '' || $stock !== '' || $cost !== '')
       <a class="ad-btn ad-btn-gray" href="{{ route('admin.products.index') }}">Clear</a>
     @endif
   </form>
@@ -40,7 +53,7 @@
     @else
       <div class="ad-scroll">
         <table class="ad-table">
-          <tr><th>Image</th><th>Name</th><th>Category</th><th>Brand</th><th>Price</th><th>Stock</th><th>Status</th><th></th></tr>
+          <tr><th>Image</th><th>Name</th><th>Category</th><th>Brand</th><th>Price</th>@if ($hasCost)<th>Buying price</th>@endif<th>Stock</th>@if ($hasCost)<th>Stock value</th>@endif<th>Status</th><th></th></tr>
           @foreach ($products as $p)
             <tr>
               <td class="ad-thumb">
@@ -54,7 +67,9 @@
               <td>{{ optional($p->category)->label ?: '—' }}</td>
               <td>{{ $p->brand ?: '—' }}</td>
               <td>৳ {{ number_format($p->price) }}</td>
+              @if ($hasCost)<td>{{ $p->cost_price !== null ? '৳ ' . number_format($p->cost_price) : '—' }}</td>@endif
               <td class="{{ $p->stock_quantity < 1 ? 'ad-red' : '' }}">{{ $p->stock_quantity }}</td>
+              @if ($hasCost)<td>{{ $p->cost_price !== null ? '৳ ' . number_format($p->cost_price * $p->stock_quantity) : '—' }}</td>@endif
               <td>
                 @if (!$p->is_published) <span class="ad-st st-cancelled">Draft</span>
                 @elseif ($p->is_upcoming) <span class="ad-st st-shipped">Coming soon</span>

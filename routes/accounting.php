@@ -57,6 +57,19 @@ Route::prefix('admin/accounting')->name('admin.accounting.')->middleware(AdminAu
         Route::post('{bank}/opening', [$b, 'updateOpening'])->whereNumber('bank')->name('opening.update');
     });
 
+    Route::prefix('savings')->name('savings.')->group(function () {
+        $h = A\HoldingController::class;
+        Route::get('/', [$h, 'index'])->name('index');
+        Route::get('create', [$h, 'create'])->name('create');
+        Route::post('/', [$h, 'store'])->name('store');
+        Route::get('{id}', [$h, 'show'])->whereNumber('id')->name('show');
+        Route::get('{id}/edit', [$h, 'edit'])->whereNumber('id')->name('edit');
+        Route::put('{id}', [$h, 'update'])->whereNumber('id')->name('update');
+        Route::delete('{id}', [$h, 'destroy'])->whereNumber('id')->name('destroy');
+        Route::post('{id}/settle', [$h, 'settle'])->whereNumber('id')->name('settle');
+        Route::delete('{id}/settle/{payment}', [$h, 'unsettle'])->whereNumber('id')->whereNumber('payment')->name('unsettle');
+    });
+
     Route::prefix('transfers')->name('transfers.')->group(function () {
         $t = A\TransferController::class;
         Route::get('/', [$t, 'index'])->name('index');

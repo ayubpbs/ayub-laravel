@@ -87,7 +87,7 @@
           @foreach ($transactions as $tx)
             <tr>
               <td>{{ $tx->txn_date->format('d M Y') }}</td>
-              <td>{{ $tx->note ?: '—' }}@if ($tx->source !== 'manual') <span class="ad-muted">({{ ucfirst($tx->source) }})</span>@endif</td>
+              <td>{{ $tx->note ?: '—' }}@if ($tx->source !== 'manual') <span class="ad-muted">({{ \App\Http\Controllers\Admin\Accounting\LedgerController::sources()[$tx->source] ?? ucfirst($tx->source) }})</span>@endif</td>
               <td class="r">@if ($tx->isIn())<span class="ad-green">৳ {{ number_format((float) $tx->amount, 2) }}</span>@else — @endif</td>
               <td class="r">@if (!$tx->isIn())<span class="ad-red">৳ {{ number_format((float) $tx->amount, 2) }}</span>@else — @endif</td>
               <td class="ad-actions">

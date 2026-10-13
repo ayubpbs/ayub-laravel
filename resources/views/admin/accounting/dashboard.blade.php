@@ -33,6 +33,46 @@
     </a>
   </div>
 
+  {{-- ===== Savings, loans & receivables, and the real total ===== --}}
+  @if ($wealth !== null || $stock !== null)
+    @php
+      $grand = $total + ($wealth['net'] ?? 0) + ($stock['value'] ?? 0);
+      $hk    = \App\Models\Holding::kinds();
+    @endphp
+    <section class="ad-card">
+      <div class="ad-card-head"><h2>Total money (accounts + stock + savings + receivables − loans)</h2><a href="{{ route('admin.accounting.savings.index') }}">Savings &amp; Loans →</a></div>
+      <div class="ad-scroll">
+        <table class="ad-table">
+          <tr><td>💰 Cash, banks, bKash &amp; Nagad</td><td class="r">৳ {{ number_format($total, 2) }}</td></tr>
+          @foreach (($wealth !== null ? $hk : []) as $key => $kk)
+            @if ($kk['side'] === 'asset')
+              <tr>
+                <td><a href="{{ route('admin.accounting.savings.index', ['kind' => $key]) }}">{{ $kk['icon'] }} {{ $kk['label'] }} <span class="ad-muted">({{ $kk['bn'] }})</span></a></td>
+                <td class="r">+ ৳ {{ number_format($wealth['by'][$key], 2) }}</td>
+              </tr>
+            @endif
+          @endforeach
+          @if ($stock !== null)
+            <tr>
+              <td><a href="{{ route('admin.products.index') }}">📦 Goods in stock <span class="ad-muted">(পণ্য মজুত, at buying price)</span></a></td>
+              <td class="r">+ ৳ {{ number_format($stock['value'], 2) }}</td>
+            </tr>
+          @endif
+          @foreach (($wealth !== null ? $hk : []) as $key => $kk)
+            @if ($kk['side'] === 'liability')
+              <tr>
+                <td><a href="{{ route('admin.accounting.savings.index', ['kind' => $key]) }}">{{ $kk['icon'] }} {{ $kk['label'] }} <span class="ad-muted">({{ $kk['bn'] }})</span></a></td>
+                <td class="r"><span class="{{ $wealth['by'][$key] > 0 ? 'ad-red' : '' }}">− ৳ {{ number_format($wealth['by'][$key], 2) }}</span></td>
+              </tr>
+            @endif
+          @endforeach
+          <tr class="ad-tfoot"><td>Net total</td><td class="r"><span class="{{ $grand < 0 ? 'ad-red' : '' }}">{{ $grand < 0 ? '−' : '' }}৳ {{ number_format(abs($grand), 2) }}</span></td></tr>
+        </table>
+      </div>
+      <p class="ad-hint">Savings, FDR, loans given and receivables are counted at the money still outstanding. Goods in stock are counted at the buying price you entered on each product (products without a buying price count as ৳ 0). Customer dues from shop orders are shown separately below and are not added here.</p>
+    </section>
+  @endif
+
   {{-- ===== Period ===== --}}
   <div class="ad-tabs">
     @foreach ($ranges as $key => $label)

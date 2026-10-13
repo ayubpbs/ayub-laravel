@@ -42,6 +42,7 @@
     @if ($state === 'upcoming') ⏳ Coming soon
     @elseif ($state === 'out') ✘ Out of stock
     @elseif ($state === 'low') ⚠ Only {{ $product->stock_quantity }} left in stock
+    @elseif (\App\Models\Product::showStockCount()) ✔ In stock — {{ number_format((int) $product->stock_quantity) }} {{ (int) $product->stock_quantity === 1 ? 'unit' : 'units' }} available
     @else ✔ In stock
     @endif
   </p>

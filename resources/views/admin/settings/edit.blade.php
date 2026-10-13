@@ -11,6 +11,7 @@
     <a href="#st-shop">Shop</a>
     <a href="#st-delivery">Delivery &amp; Advance</a>
     <a href="#st-warranty">Warranty</a>
+    <a href="#st-stock">Stock display</a>
     <a href="#st-invoice">Invoice</a>
     <a href="#st-social">Social links</a>
     <a href="#st-business">Business info</a>
@@ -92,6 +93,16 @@
         <label>Warranty terms
           <textarea name="warranty_terms" rows="3" maxlength="1000" placeholder="e.g. Warranty does not cover physical damage or burn.">{{ $v['warranty_terms'] }}</textarea>
         </label>
+      </div>
+    </section>
+
+    {{-- ===== Stock display ===== --}}
+    <section class="ad-card" id="st-stock">
+      <h2>📦 Stock display</h2>
+      <div class="ad-form">
+        <input type="hidden" name="show_stock_count" value="0">
+        <label class="ad-check"><input type="checkbox" name="show_stock_count" value="1" {{ $v['show_stock_count'] ? 'checked' : '' }}> Show the number of units in stock to customers (home page, product cards and product page)</label>
+        <small>Stock goes down automatically when an order is placed and comes back when an order is cancelled or returned. Change the number on the product's edit page when new goods arrive.</small>
       </div>
     </section>
 

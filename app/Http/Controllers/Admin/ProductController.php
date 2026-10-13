@@ -19,6 +19,7 @@ class ProductController extends Controller
         $cat = (string) $request->query('category', '');
         $brand = (string) $request->query('brand', '');
         $stock = (string) $request->query('stock', '');
+        $cost  = (string) $request->query('cost', '');
 
         $query = Product::with('category')->latestFirst();
 
@@ -49,11 +50,28 @@ class ProductController extends Controller
             $stock = '';
         }
 
+        // Products that have stock but no buying price yet (they are not counted in the stock value)
+        $hasCost = \Illuminate\Support\Facades\Schema::hasColumn('products', 'cost_price');
+        if ($hasCost && $cost === 'missing') {
+            $query->whereNull('cost_price')->where('stock_quantity', '>', 0);
+        } else {
+            $cost = '';
+        }
+
+        $summary = null;
+        if ($hasCost) {
+            try {
+                $summary = Product::stockSummary();
+            } catch (\Throwable $e) {
+                $summary = null;
+            }
+        }
+
         $products   = $query->paginate(20)->withQueryString();
         $categories = Category::flatTree(Category::orderBy('sort_order')->orderBy('id')->get());
         $brands     = Brand::orderBy('sort_order')->orderBy('name')->get();
 
-        return view('admin.products.index', compact('products', 'categories', 'brands', 'q', 'cat', 'brand', 'stock'));
+        return view('admin.products.index', compact('products', 'categories', 'brands', 'q', 'cat', 'brand', 'stock', 'cost', 'summary', 'hasCost'));
     }
 
     public function create()
@@ -349,7 +367,12 @@ class ProductController extends Controller
             unset($v['sku']);
         }
 
-        $v['cost_price']   = $v['cost_price'] ?? null;
+        // Without the cost_price column (migration not run yet) the cost cannot be saved
+        if (\Illuminate\Support\Facades\Schema::hasColumn('products', 'cost_price')) {
+            $v['cost_price'] = $v['cost_price'] ?? null;
+        } else {
+            unset($v['cost_price']);
+        }
         $v['category_id']  = $v['category_id'] ?? null;
         $v['brand_id']     = $v['brand_id'] ?? null;
         // The shop pages show the brand name saved on the product

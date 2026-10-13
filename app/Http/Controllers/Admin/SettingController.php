@@ -40,6 +40,7 @@ class SettingController extends Controller
         }
         // on/off switches (default shown when never saved)
         $v['warranty_enabled']       = (bool) old('warranty_enabled', Setting::bool('warranty_enabled', false));
+        $v['show_stock_count']       = (bool) old('show_stock_count', Setting::bool('show_stock_count', true));
         $v['invoice_show_logo']      = (bool) old('invoice_show_logo', Setting::bool('invoice_show_logo', true));
         $v['invoice_show_phone']     = (bool) old('invoice_show_phone', Setting::bool('invoice_show_phone', true));
         $v['invoice_show_warranty']  = (bool) old('invoice_show_warranty', Setting::bool('invoice_show_warranty', true));
@@ -117,7 +118,7 @@ class SettingController extends Controller
         foreach (array_keys(Setting::socials()) as $k) {
             $save[$k] = isset($data[$k]) ? trim((string) $data[$k]) : '';
         }
-        foreach (['warranty_enabled', 'invoice_show_logo', 'invoice_show_phone', 'invoice_show_warranty'] as $k) {
+        foreach (['warranty_enabled', 'show_stock_count', 'invoice_show_logo', 'invoice_show_phone', 'invoice_show_warranty'] as $k) {
             $save[$k] = $request->boolean($k) ? 1 : 0;
         }
 

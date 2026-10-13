@@ -22,6 +22,16 @@ class DashboardController extends Controller
         $lowStock = Product::where('is_upcoming', 0)->where('stock_quantity', '<=', 5)
             ->orderBy('stock_quantity')->limit(8)->get();
 
-        return view('admin.dashboard', compact('stats', 'recent', 'lowStock'));
+        // Value of the goods on the shelf (null when the cost_price column does not exist yet)
+        $stockSummary = null;
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasColumn('products', 'cost_price')) {
+                $stockSummary = Product::stockSummary();
+            }
+        } catch (\Throwable $e) {
+            $stockSummary = null;
+        }
+
+        return view('admin.dashboard', compact('stats', 'recent', 'lowStock', 'stockSummary'));
     }
 }

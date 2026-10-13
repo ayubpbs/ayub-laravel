@@ -23,6 +23,10 @@
             ['label' => 'bKash', 'url' => route('admin.accounting.accounts.show', 'bkash'), 'on' => $acct('bkash')],
             ['label' => 'Nagad', 'url' => route('admin.accounting.accounts.show', 'nagad'), 'on' => $acct('nagad')],
         ]],
+        ['label' => 'Savings & Loans', 'on' => $on('admin.accounting.savings.*'), 'children' => [
+            ['label' => 'Overview',  'url' => route('admin.accounting.savings.index'),  'on' => $on('admin.accounting.savings.index') || $on('admin.accounting.savings.show') || $on('admin.accounting.savings.edit')],
+            ['label' => 'Add New',   'url' => route('admin.accounting.savings.create'), 'on' => $on('admin.accounting.savings.create')],
+        ]],
         ['label' => 'Money Transfer', 'url' => route('admin.accounting.transfers.index'), 'on' => $on('admin.accounting.transfers.*')],
         ['label' => 'Transactions / Ledger', 'url' => route('admin.accounting.ledger.index'), 'on' => $on('admin.accounting.ledger.*')],
         ['label' => 'Reports', 'on' => $on('admin.accounting.reports.*'), 'children' => [

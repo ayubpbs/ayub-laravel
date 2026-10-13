@@ -22,6 +22,9 @@
     <span class="product-brand">{{ $p->brand }}</span>
     <a href="{{ $p->url() }}" class="product-title">{{ $p->title }}</a>
     <div class="rating"><span class="stars">{{ $p->stars() }}</span> {{ $p->rating }} ({{ $p->reviews }})</div>
+    @if ($inStock && !$p->is_upcoming && \App\Models\Product::showStockCount())
+      <div class="card-stock {{ $p->stockState() === 'low' ? 'card-stock-low' : '' }}">Stock: {{ number_format((int) $p->stock_quantity) }}</div>
+    @endif
     <div class="price-row">
       <span class="price-now">৳ {{ number_format($p->price) }}</span>
       @if ($hasOld)

@@ -6,8 +6,10 @@ use App\Http\Controllers\Admin\Accounting\Concerns\HandlesPeriod;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Models\AccountTransaction;
+use App\Models\Holding;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Throwable;
@@ -82,7 +84,29 @@ class DashboardController extends Controller
             'months'   => $months,
             'recent'   => $recent,
             'shop'     => $this->shop($p['from'], $p['to']),
+            'wealth'   => $this->wealth(),
+            'stock'    => $this->stockValue(),
         ]);
+    }
+
+    /** Goods on the shelf at buying price. Null if the cost_price column does not exist yet (migration not run). */
+    private function stockValue(): ?array
+    {
+        try {
+            return \Illuminate\Support\Facades\Schema::hasColumn('products', 'cost_price') ? Product::stockSummary() : null;
+        } catch (Throwable $e) {
+            return null;
+        }
+    }
+
+    /** Savings certificates, FDR, loans and receivables. Null if the table is not created yet (migration not run). */
+    private function wealth(): ?array
+    {
+        try {
+            return Holding::summary();
+        } catch (Throwable $e) {
+            return null;
+        }
     }
 
     /** account_id => [in, out] for a date range (null = no limit) */

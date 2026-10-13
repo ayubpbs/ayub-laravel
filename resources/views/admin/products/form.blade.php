@@ -114,6 +114,9 @@
       <label>Price (৳) *
         <input type="number" name="price" value="{{ old('price', $product->price) }}" required min="0">
       </label>
+      <label>Buying price (৳) <small>(ক্রয়মূল্য, per unit — only you can see it)</small>
+        <input type="number" name="cost_price" value="{{ old('cost_price', $product->cost_price) }}" min="0">
+      </label>
       <label>Old price (৳) <small>(to show a discount)</small>
         <input type="number" name="old_price" value="{{ old('old_price', $product->old_price) }}" min="0">
       </label>
