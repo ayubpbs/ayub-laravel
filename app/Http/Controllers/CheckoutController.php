@@ -326,9 +326,13 @@ class CheckoutController extends Controller
     {
         $qr = config('payment.bkash.qr');
 
+        // If no QR image file is found, a built-in QR of the number 01711302759 is shown,
+        // so the window never shows an empty box (change this if the number changes).
+        $builtIn = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAGQAQAAAACoxAthAAABLUlEQVR42u3bzU7DQAxFYRvx/q9sFiGd31AhdTdfpBTocDZXOrJdp1nx3+srIBAIBAJ5c31HROTwVkUO93gmZMjpvlweXFf+/tVMGc+EDOHL7UINv+fmTMgQvsRDRyYxCOSdL3dN2RsjZAhfanJlnvIlBoHcvuRDR7Y7EzLkWCT/2lfqxyCQ1Zd+us+l/7pO2v8IGXK6L+Oskl1X1uaX2yghQ9SX3Za//ezNETLk9PllrSO5OBPqC4Qv0e/za1trxm5NyJDT60ssE35OG5mSGASyfT65fyenaV/IkNN9WZ9Pbp8h1+KMkCGn+zI/g9xXmpoqjpAhfHmaYkZ7JAbhy2pKu+/9S702/0KG8KWGStK+jdxe7V8gfOmnl7kTy6kXM+9D7F8kBoFAIJCPIz8INFoscQBH3QAAAABJRU5ErkJggg==';
+
         return [
             'number' => config('payment.bkash.number', '01711-302759'),
-            'qr'     => ($qr && file_exists(public_path($qr))) ? asset($qr) : null,
+            'qr'     => ($qr && file_exists(public_path($qr))) ? asset($qr) : $builtIn,
         ];
     }
 
