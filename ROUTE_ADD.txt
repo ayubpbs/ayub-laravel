@@ -1,0 +1,6 @@
+routes/web.php ফাইলের একদম নিচে এই ২ লাইন যোগ করুন:
+
+use App\Http\Controllers\CustomerController;
+Route::get('/customers', [CustomerController::class, 'index'])->middleware('auth')->name('customers.index');
+
+(use লাইনটা ফাইলের উপরের দিকে অন্য use লাইনগুলোর সাথেও বসাতে পারেন)

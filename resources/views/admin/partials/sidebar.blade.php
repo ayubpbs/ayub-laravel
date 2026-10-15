@@ -31,6 +31,7 @@
             ['label' => 'Reviews',      'url' => route('admin.reviews.index'), 'on' => request()->routeIs('admin.reviews.*'), 'count' => \App\Models\ProductReview::pendingCount(), 'hot' => true],
         ]],
         ['perm' => 'customers', 'label' => 'Customers', 'icon' => '👥', 'url' => route('admin.customers.index'), 'on' => request()->routeIs('admin.customers.*')],
+        ['perm' => 'owner', 'label' => 'Old Customers', 'icon' => '🗂️', 'url' => route('admin.imported-customers.index'), 'on' => request()->routeIs('admin.imported-customers.*')],
         ['perm' => 'coupons', 'label' => 'Coupons', 'icon' => '🎟️', 'url' => route('admin.coupons.index'), 'on' => request()->routeIs('admin.coupons.*')],
         ['perm' => 'courier', 'label' => 'Courier', 'icon' => '🚚', 'on' => request()->routeIs('admin.courier.*'), 'children' => [
             ['label' => 'Steadfast', 'url' => route('admin.courier.steadfast'), 'on' => request()->routeIs('admin.courier.steadfast') || request()->routeIs('admin.courier.send*'), 'count' => $readyCount, 'hot' => true],

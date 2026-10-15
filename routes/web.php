@@ -50,6 +50,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::get('customers', [\App\Http\Controllers\Admin\CustomerController::class, 'index'])->name('customers.index');
         Route::get('customers/{phone}', [\App\Http\Controllers\Admin\CustomerController::class, 'show'])->where('phone', '[0-9]+')->name('customers.show');
+        Route::get('old-customers', [\App\Http\Controllers\Admin\ImportedCustomerController::class, 'index'])->name('imported-customers.index');
 
         Route::resource('products', \App\Http\Controllers\Admin\ProductController::class)->except(['show']);
         Route::get('payments', [\App\Http\Controllers\Admin\PaymentController::class, 'index'])->name('payments.index');
