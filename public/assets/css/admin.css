@@ -241,3 +241,28 @@ button:disabled{ opacity:.5; cursor:not-allowed; }
 .ad-form .ad-slug input[type=text]{ border:0; border-radius:0; flex:1; min-width:0; }
 .ad-field .tox-tinymce{ border-radius:8px; }
 @media (max-width:600px){ .ad-slug-base{ display:none; } }
+
+
+/* ===== Topbar sub-navigation + breadcrumb (partials/subnav.blade.php) ===== */
+.ad-subnav{ background:#fff; border-bottom:1px solid var(--line); }
+.ad-subnav-in{ max-width:1200px; margin:0 auto; padding:10px 24px 2px; }
+.ad-crumbs{ display:flex; flex-wrap:wrap; align-items:center; gap:2px 6px; list-style:none; margin:0 0 8px; padding:0; font-size:12.5px; color:var(--muted); }
+.ad-crumbs li + li::before{ content:"\203A"; margin-right:6px; opacity:.6; }
+.ad-crumbs a:hover{ color:var(--brand); }
+.ad-crumbs li[aria-current]{ color:var(--ink); font-weight:600; }
+.ad-subnav-row{ position:relative; display:flex; flex-wrap:nowrap; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding:0 0 8px; }
+.ad-subnav-row::-webkit-scrollbar{ display:none; }
+.ad-subnav-link{ flex:none; display:inline-flex; align-items:center; gap:6px; min-height:36px; padding:6px 14px; border:1px solid var(--line); background:#fff; border-radius:20px; font-size:14px; font-weight:600; white-space:nowrap; }
+.ad-subnav-link:hover{ border-color:var(--brand); color:var(--brand); }
+.ad-subnav-link.on{ background:var(--brand); border-color:var(--brand); color:#fff; }
+.ad-subnav-row2{ padding-top:0; }
+.ad-subnav-row2 .ad-subnav-link{ min-height:32px; padding:4px 12px; font-size:13px; font-weight:500; background:#f9fafb; }
+.ad-subnav-row2 .ad-subnav-link.on{ background:#fff; border-color:var(--brand); color:var(--brand); font-weight:700; }
+.ad-subnav-count{ min-width:20px; padding:0 6px; border-radius:10px; background:#e5e7eb; color:#374151; font-size:12px; line-height:20px; text-align:center; font-weight:700; }
+.ad-subnav-count.hot{ background:var(--brand); color:#fff; }
+.ad-subnav-link.on .ad-subnav-count{ background:rgba(255,255,255,.28); color:#fff; }
+@media (max-width:900px){
+  .ad-subnav-in{ padding:8px 14px 0; }
+  .ad-subnav-link{ min-height:40px; }
+  .ad-subnav-row2 .ad-subnav-link{ min-height:36px; }
+}

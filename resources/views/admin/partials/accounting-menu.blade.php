@@ -42,6 +42,8 @@
         ]],
         ['label' => 'Accounting Settings', 'url' => route('admin.accounting.settings.edit'), 'on' => $on('admin.accounting.settings.*')],
     ];
+    // Hand the Accounting menu to the topbar sub-navigation: admin/partials/subnav.blade.php
+    \Illuminate\Support\Facades\View::share('adminNavAccounting', $acc);
 @endphp
 
 <details class="sb-group" {{ $on('admin.accounting.*') ? 'open' : '' }}>

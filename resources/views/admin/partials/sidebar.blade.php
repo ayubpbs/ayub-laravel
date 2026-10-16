@@ -40,7 +40,7 @@
         ]],
         ['perm' => 'payments', 'label' => 'Payments', 'icon' => '💳', 'url' => route('admin.payments.index'), 'on' => request()->routeIs('admin.payments.*'), 'badge' => $dueOrders],
         ['perm' => 'invoices', 'label' => 'Invoices', 'icon' => '📄', 'url' => route('admin.invoices.index'), 'on' => request()->routeIs('admin.invoices.*')],
-        ['perm' => 'reports', 'label' => 'Reports', 'icon' => '📈', 'on' => request()->routeIs('admin.reports.*'), 'children' => [
+        ['perm' => 'reports', 'label' => 'Reports', 'icon' => '📈', 'land' => false, 'on' => request()->routeIs('admin.reports.*'), 'children' => [
             ['label' => 'Daily Sales',         'url' => route('admin.reports.daily'),    'on' => request()->routeIs('admin.reports.daily')],
             ['label' => 'Monthly Sales',       'url' => route('admin.reports.monthly'),  'on' => request()->routeIs('admin.reports.monthly')],
             ['label' => 'Product-wise Sales',  'url' => route('admin.reports.products'), 'on' => request()->routeIs('admin.reports.products')],
@@ -57,6 +57,8 @@
 
     // Staff only see the menus they were given. The owner sees everything.
     $menu = array_values(array_filter($menu, fn ($i) => \App\Support\AdminAccess::can($i['perm'] ?? 'owner')));
+    // Hand the same (permission-filtered) menu to the topbar sub-navigation: admin/partials/subnav.blade.php
+    \Illuminate\Support\Facades\View::share('adminNavMenu', $menu);
     $sbWho = \App\Support\AdminAccess::name();
     $sbOwner = \App\Support\AdminAccess::isOwner();
 @endphp
@@ -74,7 +76,7 @@
         @include($item['view'])
       @elseif (!empty($item['children']))
         <details class="sb-group" {{ !empty($item['on']) ? 'open' : '' }}>
-          <summary class="sb-link {{ !empty($item['on']) ? 'on' : '' }}">
+          <summary class="sb-link {{ !empty($item['on']) ? 'on' : '' }}" @if (($item['land'] ?? true) === false) data-no-land @endif>
             <span class="sb-ico">{{ $item['icon'] }}</span>
             <span class="sb-text">{{ $item['label'] }}</span>
             @if (!empty($item['badge']))<span class="sb-badge">{{ $item['badge'] }}</span>@endif
