@@ -244,7 +244,12 @@ class ProductController extends Controller
             'badge'          => 'nullable|string|max:50',
             'section'        => 'nullable|in:top,new',
             'stock_quantity' => 'required|integer|min:0',
+            'warranty_type'  => ['nullable', \Illuminate\Validation\Rule::in(array_merge(['none'], array_keys(\App\Support\WarrantyPolicy::types())))],
+            'warranty_days'  => 'nullable|integer|min:0|max:3650',
+            'warranty_terms' => 'nullable|string|max:1000',
         ], [
+            'warranty_type.in'        => 'Please choose a valid warranty type.',
+            'warranty_days.integer'   => 'The warranty period must be a whole number of days.',
             'title.required'          => 'Please enter the product name.',
             'sku.unique'              => 'This SKU is already used by another product.',
             'slug.unique'             => 'This URL (slug) is already used by another product. Please change it.',
@@ -372,6 +377,20 @@ class ProductController extends Controller
             $v['cost_price'] = $v['cost_price'] ?? null;
         } else {
             unset($v['cost_price']);
+        }
+        // Phase 6: the product's own warranty (empty = shop default). Without the columns (migration not run yet) nothing is saved.
+        if (\App\Support\WarrantyPolicy::columnsReady()) {
+            $v['warranty_type']  = ($v['warranty_type'] ?? null) ?: null;
+            $v['warranty_days']  = isset($v['warranty_days']) && $v['warranty_days'] !== '' ? (int) $v['warranty_days'] : null;
+            $v['warranty_terms'] = isset($v['warranty_terms']) && trim($v['warranty_terms']) !== '' ? trim($v['warranty_terms']) : null;
+            if (in_array($v['warranty_type'], ['replacement', 'repair', 'any'], true) && !$v['warranty_days']) {
+                // a policy without a period would silently use the shop default period: ask for it instead
+                if ((int) \App\Models\Setting::get('warranty_days', 0) <= 0) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['warranty_days' => 'Please enter the warranty period in days (the shop default period is not set).']);
+                }
+            }
+        } else {
+            unset($v['warranty_type'], $v['warranty_days'], $v['warranty_terms']);
         }
         $v['category_id']  = $v['category_id'] ?? null;
         $v['brand_id']     = $v['brand_id'] ?? null;

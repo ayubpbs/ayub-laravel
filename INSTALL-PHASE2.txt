@@ -1,0 +1,38 @@
+PHASE 2 - Customer search, profiles, phone normalizer
+=====================================================
+Project folder: C:\xampp\htdocs\ayub-laravel   (PHP 8.0.30 - nothing here needs a newer PHP)
+
+0) BACKUP FIRST (never overwrite an old backup - the time is in the file name)
+   mkdir C:\backups
+   C:\xampp\mysql\bin\mysqldump.exe -u root -p ayub_laravel > C:\backups\db_before_phase2_YYYYMMDD_HHMM.sql
+   robocopy C:\xampp\htdocs\ayub-laravel C:\backups\ayub-laravel_before_phase2_YYYYMMDD_HHMM /E /XD vendor node_modules
+
+1) Copy the files of this zip into the project, keeping the folder structure.
+   NEW:      app\Support\Phone.php
+             app\Models\CustomerProfile.php
+             app\Console\Commands\SyncCustomerProfiles.php
+             database\migrations\2026_10_27_000000_create_customer_profiles_table.php
+             resources\views\admin\customers\create.blade.php
+             routes\aftersales.php
+             tests\Unit\PhoneTest.php
+             tests\Feature\CustomerSearchTest.php
+   REPLACED: app\Http\Controllers\Admin\CustomerController.php
+             resources\views\admin\customers\index.blade.php
+             resources\views\admin\customers\show.blade.php
+             routes\web.php   <- only ONE block was added at the very end:
+                                 require __DIR__.'/aftersales.php';
+                                 (if your web.php changed after you sent me the zip, do not overwrite it:
+                                  just add that one line at the end of your own web.php)
+
+2) cd C:\xampp\htdocs\ayub-laravel
+   C:\xampp\php\php.exe artisan migrate
+   C:\xampp\php\php.exe artisan customers:sync-profiles --dry-run
+   C:\xampp\php\php.exe artisan customers:sync-profiles
+   C:\xampp\php\php.exe artisan route:clear
+   C:\xampp\php\php.exe artisan view:clear
+
+3) Manual test: see the list in the chat reply.
+
+ROLLBACK
+   C:\xampp\php\php.exe artisan migrate:rollback --step=1      (drops only customer_profiles)
+   then put the old copies of the 4 replaced files back from your backup folder.

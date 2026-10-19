@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Product;
+use App\Support\Audit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -58,7 +59,23 @@ class OrderController extends Controller
             return back();
         }
 
+        // Phase 5: cancelling / returning a delivered order that has a claim would put goods back in stock twice
+        // (the claim's inspection decides what happens to goods that came back).
+        if (in_array($new, Order::lockedStatuses(), true) && \App\Models\ServiceRequest::tableReady()) {
+            $claim = $order->claims()->whereIn('status', \App\Models\ServiceRequest::activeStatuses())->first();
+            if ($claim) {
+                return back()->with('error', 'Order #' . $order->id . ' has claim #' . $claim->id . '. Use the claim to handle returned goods; cancelling or returning the whole order would put them back in stock twice.');
+            }
+        }
+
+        $old = $order->status;
         $order->changeStatus($new);
+
+        Audit::log(
+            'order.status', 'order', $order->id,
+            'Order #' . $order->id . ' status: ' . (Order::statuses()[$old] ?? $old) . ' → ' . Order::statuses()[$new],
+            ['status' => $old], ['status' => $new], $order->phone
+        );
 
         return back()->with('success', 'Order status changed to "' . Order::statuses()[$new] . '".');
     }

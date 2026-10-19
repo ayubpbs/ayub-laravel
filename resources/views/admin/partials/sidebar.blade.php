@@ -6,6 +6,10 @@
     // Live orders that still have money to collect (for the Payments badge)
     $dueOrders = \App\Models\Order::whereNotIn('status', \App\Models\Order::lockedStatuses())->where('status', 'delivered')->owing()->count();
     $unreadNotif = \App\Models\AdminNotification::unreadCount();
+    // Phase 5: open claims (0 until the migration has been run)
+    $claimTables = \App\Models\ServiceRequest::tableReady();
+    $claimOpen   = $claimTables ? \App\Models\ServiceRequest::where('status', 'open')->count() : 0;
+    $claimStatus = request()->routeIs('admin.claims.index') ? (string) request('status', '') : null;
     $curStatus = request()->routeIs('admin.orders.index') ? (string) request('status', '') : null;
 
     $orderChildren = [['label' => 'All Orders', 'url' => route('admin.orders.index'), 'on' => $curStatus === '' || ($curStatus !== null && !array_key_exists($curStatus, \App\Models\Order::statuses())), 'count' => $oc->sum()]];
@@ -18,11 +22,22 @@
             'hot'   => $key === 'pending',
         ];
     }
+    if (\App\Support\AdminAccess::can('orders_create')) {
+        $orderChildren[] = ['label' => '+ New Order', 'url' => route('admin.orders.create'), 'on' => request()->routeIs('admin.orders.create') || request()->routeIs('admin.orders.store')];
+    }
 
     // The full admin structure. Items with no 'url' are not built yet and show as "Soon".
     $menu = [
         ['perm' => 'dashboard', 'label' => 'Dashboard', 'icon' => '📊', 'url' => route('admin.dashboard'), 'on' => request()->routeIs('admin.dashboard')],
         ['perm' => 'orders_view', 'label' => 'Orders', 'icon' => '🧾', 'on' => request()->routeIs('admin.orders.*'), 'badge' => $oc['pending'] ?? 0, 'children' => $orderChildren],
+        ['perm' => 'claims_view', 'label' => 'Claims', 'icon' => '↩️', 'on' => request()->routeIs('admin.claims.*'), 'badge' => $claimOpen, 'children' => array_values(array_filter([
+            ['label' => 'All Claims', 'url' => route('admin.claims.index'), 'on' => $claimStatus === '' || request()->routeIs('admin.claims.show')],
+            ['label' => 'Open',       'url' => route('admin.claims.index', ['status' => 'open']), 'on' => $claimStatus === 'open', 'count' => $claimOpen, 'hot' => true],
+            ['label' => 'Approved',   'url' => route('admin.claims.index', ['status' => 'approved']), 'on' => $claimStatus === 'approved'],
+            ['label' => 'Warranty claims', 'url' => route('admin.claims.index', ['kind' => 'warranty']), 'on' => request()->routeIs('admin.claims.index') && request('kind') === 'warranty'],
+            \App\Support\AdminAccess::can('claims_manage') ? ['label' => '+ Warranty Claim', 'url' => route('admin.claims.warranty.create'), 'on' => request()->routeIs('admin.claims.warranty.*')] : null,
+            \App\Support\AdminAccess::can('claims_manage') ? ['label' => '+ New Claim', 'url' => route('admin.claims.create'), 'on' => request()->routeIs('admin.claims.create') || request()->routeIs('admin.claims.store')] : null,
+        ]))],
         ['perm' => 'products', 'label' => 'Products', 'icon' => '📦', 'on' => request()->routeIs('admin.products.*') || request()->routeIs('admin.categories.*') || request()->routeIs('admin.brands.*') || request()->routeIs('admin.reviews.*'), 'badge' => \App\Models\ProductReview::pendingCount(), 'children' => [
             ['label' => 'All Products', 'url' => route('admin.products.index'), 'on' => request()->routeIs('admin.products.index') || request()->routeIs('admin.products.edit')],
             ['label' => 'Add Product',  'url' => route('admin.products.create'), 'on' => request()->routeIs('admin.products.create')],

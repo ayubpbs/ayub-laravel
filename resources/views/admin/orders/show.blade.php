@@ -5,7 +5,20 @@
 @section('content')
   @php $ax = \App\Support\AdminAccess::class; @endphp
   <p class="ad-crumbs"><a href="{{ route('admin.orders.index') }}">← All orders</a></p>
-  <h1 class="ad-title">Order #{{ $order->id }} <span class="ad-st st-{{ $order->status }}">{{ $order->statusLabel() }}</span></h1>
+  @php
+    $claimsReady = \App\Models\ServiceRequest::tableReady();
+    $orderClaims = $claimsReady && $ax::can('claims_view') ? $order->claims()->latest('id')->get() : collect();
+  @endphp
+  <h1 class="ad-title">Order #{{ $order->id }} <span class="ad-st st-{{ $order->status }}">{{ $order->statusLabel() }}</span>@if ($order->isClaimOrder()) <span class="ad-st st-courier_sent">{{ $order->typeLabel() }}</span>@endif</h1>
+  <p>
+    @if ($ax::can('orders_create'))
+      <a class="ad-btn ad-btn-gray" href="{{ route('admin.orders.create', ['reorder' => $order->id]) }}">↻ Reorder</a>
+    @endif
+    @if ($claimsReady && $order->status === 'delivered' && $ax::can('claims_manage'))
+      <a class="ad-btn ad-btn-gray" href="{{ route('admin.claims.create', ['order' => $order->id]) }}">↩ Open claim</a>
+      <a class="ad-btn ad-btn-gray" href="{{ route('admin.claims.warranty.create', ['order' => $order->id]) }}">🛡 Warranty claim</a>
+    @endif
+  </p>
 
   <div class="ad-two">
     <section class="ad-card">
@@ -22,6 +35,15 @@
         @endif
         <dt>Order time</dt><dd>{{ $order->created_at->format('d M Y, h:i A') }}</dd>
         <dt>Payment</dt><dd>{{ $order->paymentMethodLabel() }}</dd>
+        @if ($order->created_by_name)
+          <dt>Created by</dt><dd>{{ $order->created_by_name }} <span class="ad-muted">(admin panel)</span></dd>
+        @endif
+        @if ($order->source_order_id)
+          <dt>{{ $order->isClaimOrder() ? $order->typeLabel() . ' for' : 'Reorder of' }}</dt><dd><a class="ad-link" href="{{ route('admin.orders.show', $order->source_order_id) }}">Order #{{ $order->source_order_id }}</a>@if ($order->service_request_id && $ax::can('claims_view')) · <a class="ad-link" href="{{ route('admin.claims.show', $order->service_request_id) }}">Claim #{{ $order->service_request_id }}</a>@endif</dd>
+        @endif
+        @if ($order->delivered_at)
+          <dt>Delivered</dt><dd>{{ $order->delivered_at->format('d M Y, h:i A') }}</dd>
+        @endif
       </dl>
     </section>
 
@@ -91,6 +113,9 @@
     <dl class="ad-dl">
       <dt>Order total</dt><dd>৳ {{ number_format($order->total) }}</dd>
       <dt>Received</dt><dd>৳ {{ number_format($net) }}</dd>
+      @if ($order->claimRefunded() > 0)
+        <dt>Refunded for claims</dt><dd class="ad-red">− ৳ {{ number_format($order->claimRefunded()) }} <small class="ad-muted">(the total and invoice stay as they were)</small></dd>
+      @endif
       <dt>{{ $order->isLocked() ? 'To refund' : 'Due' }}</dt>
       <dd><strong class="{{ ($order->isLocked() ? $net : $due) > 0 ? 'ad-red' : '' }}">৳ {{ number_format($order->isLocked() ? max(0, $net) : $due) }}</strong></dd>
     </dl>
@@ -141,6 +166,26 @@
     </div>
   </section>
 
+  @if ($orderClaims->isNotEmpty())
+    <section class="ad-card">
+      <h2>Claims on this order</h2>
+      <div class="ad-scroll">
+        <table class="ad-table">
+          <tr><th>Claim</th><th>Type</th><th>Solution</th><th>Status</th><th>Opened</th></tr>
+          @foreach ($orderClaims as $c)
+            <tr>
+              <td><a class="ad-link" href="{{ route('admin.claims.show', $c->id) }}"><strong>#{{ $c->id }}</strong></a></td>
+              <td>{{ $c->typeLabel() }}</td>
+              <td>{{ $c->resolution ? ucfirst($c->resolution) : '—' }}@if ($c->replacement_order_id) · <a class="ad-link" href="{{ route('admin.orders.show', $c->replacement_order_id) }}">order #{{ $c->replacement_order_id }}</a>@endif</td>
+              <td><span class="ad-st {{ \App\Models\ServiceRequest::badge($c->status) }}">{{ $c->statusLabel() }}</span></td>
+              <td>{{ $c->created_at->format('d M Y') }}</td>
+            </tr>
+          @endforeach
+        </table>
+      </div>
+    </section>
+  @endif
+
   <section class="ad-card">
     <h2>Courier</h2>
     @if ($order->consignment_id)
@@ -178,7 +223,11 @@
         <tr><th>Product</th><th>Price</th><th>Quantity</th><th class="r">Total</th></tr>
         @foreach ($order->items as $item)
           <tr>
-            <td>{{ $item->title }}</td>
+            <td>{{ $item->title }}
+              @if ($item->warranty_source && $item->warranty_type && $item->warranty_type !== 'none' && $item->warranty_days)
+                <br><small class="ad-muted">🛡 {{ \App\Support\WarrantyPolicy::typeLabel($item->warranty_type) }}, {{ $item->warranty_days }} days@if ($order->delivered_at) (until {{ $order->delivered_at->copy()->addDays((int) $item->warranty_days)->format('d M Y') }})@endif</small>
+              @endif
+            </td>
             <td>৳ {{ number_format($item->price) }}</td>
             <td>{{ $item->quantity }}</td>
             <td class="r">৳ {{ number_format($item->line_total) }}</td>

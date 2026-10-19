@@ -125,6 +125,28 @@
       </label>
     </div>
 
+    {{-- Phase 6: warranty of this product. Empty = the shop default from Settings. The policy is copied onto every order line when an order is created. --}}
+    @if (\App\Support\WarrantyPolicy::columnsReady())
+      <div class="ad-row">
+        <label>🛡 Warranty <small>(for this product)</small>
+          <select name="warranty_type">
+            <option value="">Use the shop default (Settings)</option>
+            <option value="none" {{ old('warranty_type', $product->warranty_type) === 'none' ? 'selected' : '' }}>No warranty</option>
+            @foreach (\App\Support\WarrantyPolicy::types() as $k => $label)
+              <option value="{{ $k }}" {{ old('warranty_type', $product->warranty_type) === $k ? 'selected' : '' }}>{{ $label }}</option>
+            @endforeach
+          </select>
+        </label>
+        <label>Warranty period (days)
+          <input type="number" name="warranty_days" value="{{ old('warranty_days', $product->warranty_days) }}" min="0" max="3650" placeholder="e.g. 365">
+        </label>
+      </div>
+      <label>Warranty terms <small>(shown to your staff on a claim; empty = shop default terms)</small>
+        <textarea name="warranty_terms" rows="2" maxlength="1000" placeholder="e.g. No cover for burn, water or physical damage.">{{ old('warranty_terms', $product->warranty_terms) }}</textarea>
+      </label>
+      <p class="ad-hint">Changing this affects orders created from now on. Orders that were already created keep the warranty they were sold with.</p>
+    @endif
+
     <div class="ad-row">
       <label>Badge <small>(e.g. -20%, New)</small>
         <input type="text" name="badge" value="{{ old('badge', $product->badge) }}" maxlength="50">

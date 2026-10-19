@@ -136,7 +136,7 @@ class DashboardController extends Controller
     {
         try {
             $locked = Order::lockedStatuses();
-            $netSql = Order::NET_PAID_SQL;
+            $netSql = Order::netPaidSql();
 
             $recv = Payment::query();
             if ($from) $recv->whereDate('paid_at', '>=', $from);

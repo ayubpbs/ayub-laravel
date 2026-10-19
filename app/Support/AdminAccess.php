@@ -28,6 +28,11 @@ class AdminAccess
             'dashboard'     => ['Dashboard',               'See the dashboard with sales numbers'],
             'orders_view'   => ['Orders: view',            'See orders and notifications'],
             'orders_manage' => ['Orders: change status',   'Confirm, cancel or deliver orders'],
+            'orders_create' => ['Orders: create',          'Create an order for a customer and reorder an old order'],
+            'claims_view'   => ['Claims: view',            'See exchange / wrong-product claims, their photos and videos'],
+            'claims_manage' => ['Claims: manage',          'Open claims, approve or reject, add evidence and shipments, make replacement orders'],
+            'claims_inspect' => ['Claims: inspect returned goods', 'Decide what happens to returned goods (back to stock, supplier, scrap) and inspect warranty products'],
+            'aftersales_approve' => ['Warranty: accept / reject / choose solution', 'Accept or reject a warranty claim and choose repair or replacement'],
             'courier'       => ['Courier',                 'Send orders to Steadfast, tracking, returns'],
             'payments'      => ['Payments',                'Record payments, verify bKash payments'],
             'invoices'      => ['Invoices',                'Create and print invoices'],
@@ -46,6 +51,23 @@ class AdminAccess
             'admin.logout'          => self::OPEN,
             'admin.dashboard'       => 'dashboard',
             'admin.orders.status'   => 'orders_manage',
+            // Phase 4: these must stay ABOVE 'admin.orders.*' (first match wins)
+            'admin.orders.create'   => 'orders_create',
+            'admin.orders.create.*' => 'orders_create',
+            'admin.orders.store'    => 'orders_create',
+            // Phase 5: claims. Specific routes first, the catch-all "admin.claims.*" last (first match wins)
+            'admin.claims.index'    => 'claims_view',
+            'admin.claims.show'     => 'claims_view',
+            'admin.claims.evidence.show' => 'claims_view',
+            'admin.claims.inspect'  => 'claims_inspect',
+            // Phase 6: warranty. Only people with "aftersales_approve" decide a warranty claim (the owner always can)
+            'admin.claims.warranty.accept'  => 'aftersales_approve',
+            'admin.claims.warranty.reject'  => 'aftersales_approve',
+            'admin.claims.warranty.resolve' => 'aftersales_approve',
+            'admin.claims.warranty.inspect' => 'claims_inspect',
+            'admin.claims.refund'   => 'payments',        // giving money back also needs the Payments task
+            'admin.claims.order'    => 'orders_create',   // a replacement / exchange order is an order
+            'admin.claims.*'        => 'claims_manage',
             'admin.bkash.verify'    => 'payments',
             'admin.orders.*'        => 'orders_view',
             'admin.notifications.*' => 'orders_view',
@@ -136,6 +158,7 @@ class AdminAccess
         $pages = [
             'dashboard'   => 'admin.dashboard',
             'orders_view' => 'admin.orders.index',
+            'claims_view' => 'admin.claims.index',
             'courier'     => 'admin.courier.steadfast',
             'payments'    => 'admin.payments.index',
             'invoices'    => 'admin.invoices.index',

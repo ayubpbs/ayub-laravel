@@ -1,0 +1,46 @@
+PHASE 4 - Admin order creation, Reorder, order attribution
+==========================================================
+Project folder: C:\xampp\htdocs\ayub-laravel   (PHP 8.0.30 - nothing here needs a newer PHP)
+Built on top of phase 2 + phase 3 (INSTALL-PHASE2.zip). Phase 3 must be installed first.
+
+0) BACKUP FIRST (never overwrite an old backup - the time is in the file name)
+   C:\xampp\mysql\bin\mysqldump.exe -u root -p ayub_laravel > C:\backups\db_before_phase4_YYYYMMDD_HHMM.sql
+   robocopy C:\xampp\htdocs\ayub-laravel C:\backups\ayub-laravel_before_phase4_YYYYMMDD_HHMM /E /XD vendor node_modules .git
+
+1) Copy the files of this zip into the project, keeping the folder structure.
+   NEW:      app\Services\AdminOrderBuilder.php
+             app\Http\Controllers\Admin\OrderCreateController.php
+             database\migrations\2026_10_28_000000_add_admin_order_columns_to_orders_table.php
+             resources\views\admin\orders\create.blade.php
+             tests\Feature\AdminOrderCreateTest.php
+   REPLACED: app\Models\Order.php
+             app\Http\Controllers\Admin\OrderController.php      (only: one audit log call in status())
+             app\Support\AdminAccess.php                         (new permission "orders_create")
+             routes\aftersales.php                               (4 new routes; web.php is NOT changed)
+             resources\views\admin\orders\show.blade.php         (Reorder button, "Created by" lines)
+             resources\views\admin\partials\sidebar.blade.php    ("+ New Order" under Orders)
+             resources\views\admin\customers\show.blade.php      ("+ New order" button)
+   If you changed any of the 7 REPLACED files after you sent me phase 3, do not overwrite it blindly:
+   compare it with the new one and keep your own changes.
+   NOT touched: CheckoutController, Cart, CourierController, PaymentController, web.php.
+
+2) cd C:\xampp\htdocs\ayub-laravel
+   C:\xampp\php\php.exe artisan migrate
+   C:\xampp\php\php.exe artisan route:clear
+   C:\xampp\php\php.exe artisan view:clear
+
+3) Staff: Admin > Staff & Permissions > edit a staff member > tick "Orders: create"
+   (also keep "Orders: view", the New Order link lives in the Orders menu).
+   Nobody gets the new permission automatically. The owner can always use it.
+
+4) Manual test (see the chat reply for the full list).
+
+TESTS (only on a test database whose name ends with _test, e.g. ayub_test):
+   set DB_DATABASE=ayub_test in a copy of .env (or .env.testing), then
+   C:\xampp\php\php.exe artisan migrate
+   C:\xampp\php\php.exe vendor\bin\phpunit --filter AdminOrderCreateTest
+
+ROLLBACK
+   C:\xampp\php\php.exe artisan migrate:rollback --step=1   (drops only the 7 new columns of orders)
+   then put the old copies of the 7 replaced files back from your backup folder.
+   Orders created in the meantime stay (they are normal orders).

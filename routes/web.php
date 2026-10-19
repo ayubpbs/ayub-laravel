@@ -115,3 +115,5 @@ Route::prefix('admin')->name('admin.')->group(function () {
 // Accounting module
 require __DIR__.'/accounting.php';
 require __DIR__.'/staff.php';
+// After-sales module (customer profiles, orders, exchanges, warranty)
+require __DIR__.'/aftersales.php';

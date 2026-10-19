@@ -12,8 +12,9 @@ class DashboardController extends Controller
     {
         $stats = [
             'pending'   => Order::where('status', 'pending')->count(),
-            'today'     => Order::whereDate('created_at', today())->count(),
-            'orders'    => Order::count(),
+            // Replacement / exchange orders made from a claim are not counted as new orders
+            'today'     => Order::salesOrders()->whereDate('created_at', today())->count(),
+            'orders'    => Order::salesOrders()->count(),
             'delivered' => (int) Order::where('status', 'delivered')->sum('total'),
             'products'  => Product::count(),
         ];

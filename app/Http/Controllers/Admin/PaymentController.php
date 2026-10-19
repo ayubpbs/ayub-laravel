@@ -124,7 +124,7 @@ class PaymentController extends Controller
         };
 
         $locked  = Order::lockedStatuses();
-        $netSql  = Order::NET_PAID_SQL;
+        $netSql  = Order::netPaidSql();
 
         return [
             'today' => $net(Payment::whereDate('paid_at', today())),

@@ -14,6 +14,7 @@ class Product extends Model
         'price', 'old_price', 'badge', 'rating', 'reviews', 'section',
         'stock_quantity', 'is_upcoming', 'is_published', 'published_at', 'video_urls', 'specifications', 'sku',
         'slug', 'short_description', 'product_type', 'cost_price',
+        'warranty_type', 'warranty_days', 'warranty_terms',
     ];
 
     protected $casts = [
