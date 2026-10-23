@@ -150,7 +150,7 @@
       @if ($o->discount > 0)
         <tr><td>Discount{{ $o->coupon_code ? ' (' . $o->coupon_code . ')' : '' }}</td><td class="r">− ৳ {{ number_format($o->discount) }}</td></tr>
       @endif
-      <tr><td>Delivery charge</td><td class="r">৳ {{ number_format($o->delivery_charge) }}</td></tr>
+      <tr><td>Delivery charge</td><td class="r">@if ($o->delivery_charge > 0)৳ {{ number_format($o->delivery_charge) }}@else<strong>Free Delivery</strong>@endif</td></tr>
       <tr class="grand"><td>Total</td><td class="r">৳ {{ number_format($o->total) }}</td></tr>
       <tr><td>Paid</td><td class="r">৳ {{ number_format(max(0, $net)) }}</td></tr>
       @if ($due > 0)

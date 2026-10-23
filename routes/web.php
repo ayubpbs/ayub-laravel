@@ -63,6 +63,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('orders', [\App\Http\Controllers\Admin\OrderController::class, 'index'])->name('orders.index');
         Route::get('orders/{id}', [\App\Http\Controllers\Admin\OrderController::class, 'show'])->name('orders.show');
         Route::post('orders/{id}/status', [\App\Http\Controllers\Admin\OrderController::class, 'status'])->name('orders.status');
+        Route::post('orders/{id}/charges', [\App\Http\Controllers\Admin\OrderController::class, 'charges'])->whereNumber('id')->name('orders.charges');
         Route::post('orders/{id}/bkash/verify', [\App\Http\Controllers\Admin\BkashController::class, 'verify'])->whereNumber('id')->name('bkash.verify');
 
         Route::get('customers', [\App\Http\Controllers\Admin\CustomerController::class, 'index'])->name('customers.index');
@@ -114,6 +115,20 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('{id}/open', [$n, 'open'])->whereNumber('id')->name('open');
             Route::post('{id}/read', [$n, 'read'])->whereNumber('id')->name('read');
         });
+
+        // Website header menu (owner only)
+        $menu = \App\Http\Controllers\Admin\NavMenuController::class;
+        Route::get('menu', [$menu, 'index'])->name('menu.index');
+        Route::get('menu/create', [$menu, 'create'])->name('menu.create');
+        Route::post('menu', [$menu, 'store'])->name('menu.store');
+        Route::post('menu/setup', [$menu, 'setup'])->name('menu.setup');
+        Route::post('menu/import', [$menu, 'import'])->name('menu.import');
+        Route::post('menu/reset', [$menu, 'reset'])->name('menu.reset');
+        Route::get('menu/{id}/edit', [$menu, 'edit'])->whereNumber('id')->name('menu.edit');
+        Route::put('menu/{id}', [$menu, 'update'])->whereNumber('id')->name('menu.update');
+        Route::delete('menu/{id}', [$menu, 'destroy'])->whereNumber('id')->name('menu.destroy');
+        Route::post('menu/{id}/move', [$menu, 'move'])->whereNumber('id')->name('menu.move');
+        Route::post('menu/{id}/toggle', [$menu, 'toggle'])->whereNumber('id')->name('menu.toggle');
 
         Route::get('settings', [\App\Http\Controllers\Admin\SettingController::class, 'edit'])->name('settings.edit');
         Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');

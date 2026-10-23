@@ -75,6 +75,48 @@ class OrderController extends Controller
         return view('admin.orders.show', compact('order'));
     }
 
+    /** Change the delivery charge and the discount of an order (0 delivery = free delivery on the invoice) */
+    public function charges(Request $request, $id)
+    {
+        $order = Order::findOrFail($id);
+
+        if ($order->isLocked()) {
+            return back()->with('error', 'A ' . strtolower($order->statusLabel()) . ' order can no longer be changed.');
+        }
+
+        $data = $request->validate([
+            'delivery_charge' => 'required|integer|min:0|max:100000',
+            'discount'        => 'required|integer|min:0|max:10000000',
+        ], [
+            'delivery_charge.required' => 'Please enter the delivery charge (0 for free delivery).',
+            'delivery_charge.integer'  => 'The delivery charge must be a whole number of taka.',
+            'discount.required'        => 'Please enter the discount (0 for none).',
+            'discount.integer'         => 'The discount must be a whole number of taka.',
+        ]);
+
+        $delivery = (int) $data['delivery_charge'];
+        $discount = (int) $data['discount'];
+
+        if ($discount > (int) $order->subtotal) {
+            return back()->withInput()->with('error', 'The discount cannot be more than the subtotal (৳ ' . number_format($order->subtotal) . ').');
+        }
+
+        $before = ['discount' => (int) $order->discount, 'delivery_charge' => (int) $order->delivery_charge, 'total' => (int) $order->total];
+        $after  = ['discount' => $discount, 'delivery_charge' => $delivery, 'total' => (int) $order->subtotal - $discount + $delivery];
+
+        $order->update($after);
+
+        Audit::log(
+            'order.charges', 'order', $order->id,
+            'Order #' . $order->id . ' delivery ৳ ' . number_format($before['delivery_charge']) . ' → ৳ ' . number_format($delivery)
+                . ', discount ৳ ' . number_format($before['discount']) . ' → ৳ ' . number_format($discount)
+                . ', total ৳ ' . number_format($before['total']) . ' → ৳ ' . number_format($after['total']),
+            $before, $after, $order->phone
+        );
+
+        return back()->with('success', 'Order #' . $order->id . ' updated. New total: ৳ ' . number_format($after['total']) . ($delivery === 0 ? ' (free delivery).' : '.'));
+    }
+
     public function status(Request $request, $id)
     {
         $order = Order::with('items')->findOrFail($id);

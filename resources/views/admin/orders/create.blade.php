@@ -83,17 +83,34 @@
     </section>
 
     <section class="ad-card">
-      <h2>4. Coupon and total</h2>
+      <h2>4. Coupon, delivery, discount and payment</h2>
       <div class="ad-row">
         <label>Coupon code <small>(optional, checked when you save)</small>
           <input type="text" name="coupon_code" value="{{ old('coupon_code', $form['coupon_code']) }}" maxlength="30">
         </label>
+        <label>Delivery charge (৳) <small>(blank = automatic, 0 = free delivery)</small>
+          <input type="number" name="delivery_charge" id="f-delivery" value="{{ old('delivery_charge') }}" min="0" step="1" placeholder="Automatic">
+        </label>
+        <label>Discount (৳) <small>(optional)</small>
+          <input type="number" name="discount_amount" id="f-discount" value="{{ old('discount_amount') }}" min="0" step="1">
+        </label>
+      </div>
+      <div class="ad-row">
+        <label>bKash amount received (৳) <small>(optional)</small>
+          <input type="number" name="bkash_amount" id="f-bkash" value="{{ old('bkash_amount') }}" min="1" step="1">
+        </label>
+        <label>bKash transaction ID <small>(optional)</small>
+          <input type="text" name="bkash_trx_id" value="{{ old('bkash_trx_id') }}" maxlength="100">
+        </label>
       </div>
       <dl class="ad-dl">
         <dt>Subtotal</dt><dd id="t-sub">৳ 0</dd>
+        <dt>Discount</dt><dd id="t-disc">− ৳ 0</dd>
         <dt>Delivery charge</dt><dd id="t-del">৳ 0</dd>
         <dt>Total</dt><dd><strong id="t-total">৳ 0</strong> <small class="ad-muted">(before any coupon)</small></dd>
-        <dt>Payment</dt><dd>Cash on delivery. Record the money in Payments when it is received.</dd>
+        <dt>bKash received</dt><dd id="t-bk">৳ 0</dd>
+        <dt>Due</dt><dd id="t-due">৳ 0</dd>
+        <dt>Payment</dt><dd>The due amount is cash on delivery. Record the money in Payments when it is received.</dd>
       </dl>
     </section>
 
@@ -240,10 +257,21 @@
       }
 
       function totals() {
-        var sub = items.reduce(function (s, i) { return s + i.qty * i.price; }, 0);
-        var del = (sub > 0 && dEl.value) ? (dEl.value === 'Dhaka' ? rates.inside : rates.outside) : 0;
-        $('t-sub').textContent = money(sub); $('t-del').textContent = money(del); $('t-total').textContent = money(sub + del);
+        var sub  = items.reduce(function (s, i) { return s + i.qty * i.price; }, 0);
+        var auto = (sub > 0 && dEl.value) ? (dEl.value === 'Dhaka' ? rates.inside : rates.outside) : 0;
+        var dv   = $('f-delivery').value.trim();
+        var del  = dv !== '' ? Math.max(0, parseInt(dv, 10) || 0) : auto;
+        var disc = Math.min(sub, Math.max(0, parseInt($('f-discount').value, 10) || 0));
+        var bk   = Math.max(0, parseInt($('f-bkash').value, 10) || 0);
+        var total = sub - disc + del;
+        $('t-sub').textContent = money(sub);
+        $('t-disc').textContent = '− ' + money(disc);
+        $('t-del').textContent = (sub > 0 && del === 0 && (dv !== '' || dEl.value)) ? 'Free delivery' : money(del);
+        $('t-total').textContent = money(total);
+        $('t-bk').textContent = money(bk);
+        $('t-due').textContent = money(Math.max(0, total - bk)) + (bk > total ? ' (bKash is more than the total)' : '');
       }
+      ['f-delivery', 'f-discount', 'f-bkash'].forEach(function (id) { $(id).addEventListener('input', totals); });
 
       // The button is locked after the first click, so a double click cannot send the form twice
       $('order-form').addEventListener('submit', function () {

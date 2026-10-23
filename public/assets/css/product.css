@@ -70,7 +70,7 @@ button.btn-primary.pd-btn{ border:1.5px solid var(--brand); }
 .pd-panel[hidden]{ display:none; }
 .pd-panel h3{ margin:18px 0 8px; font-size:18px; }
 .pd-tabs.is-ready .pd-panel h3{ display:none; }   /* tab label already says it */
-.pd-prose{ color:#333; line-height:1.7; max-width:78ch; overflow-wrap:anywhere; }
+.pd-prose{ color:#333; line-height:1.7; overflow-wrap:anywhere; }
 .pd-table{ border-collapse:collapse; width:100%; max-width:640px; }
 .pd-table th, .pd-table td{ text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); font-size:14.5px; vertical-align:top; }
 .pd-table th{ width:34%; color:var(--muted); font-weight:600; background:#fafafa; }
@@ -195,7 +195,8 @@ button.btn-primary.pd-btn{ border:1.5px solid var(--brand); }
 .pd-prose a{ color:var(--brand); text-decoration:underline; }
 .pd-prose img{ max-width:100%; height:auto; }
 .pd-prose blockquote{ margin:0 0 .9em; padding:6px 14px; border-left:4px solid var(--line); color:#555; }
-.pd-prose table{ border-collapse:collapse; max-width:100%; display:block; overflow-x:auto; margin:0 0 .9em; }
+.pd-prose table{ border-collapse:collapse; width:100% !important; max-width:100% !important; margin:0 0 .9em; }
+@media (max-width:760px){ .pd-prose table{ display:block; overflow-x:auto; } }
 .pd-prose td, .pd-prose th{ border:1px solid var(--line); padding:6px 10px; vertical-align:top; }
 .pd-prose th{ background:#fafafa; }
 .pd-prose pre{ white-space:pre-wrap; background:#f6f6f6; padding:10px; border-radius:6px; }

@@ -68,6 +68,25 @@
     </section>
   </div>
 
+  @if (!$order->isLocked() && $ax::can('orders_manage'))
+    <section class="ad-card">
+      <h2>Delivery charge &amp; discount</h2>
+      <form action="{{ route('admin.orders.charges', $order->id) }}" method="POST" class="ad-form" onsubmit="return confirm('Change the delivery charge and discount of this order?');">
+        @csrf
+        <div class="ad-row">
+          <label>Delivery charge (৳) <small>(0 = free delivery)</small>
+            <input type="number" name="delivery_charge" value="{{ old('delivery_charge', $order->delivery_charge) }}" min="0" step="1" required>
+          </label>
+          <label>Discount (৳)
+            <input type="number" name="discount" value="{{ old('discount', $order->discount) }}" min="0" step="1" required>
+          </label>
+        </div>
+        <div class="ad-submit"><button type="submit" class="ad-btn">Save</button></div>
+      </form>
+      <p class="ad-hint">Subtotal is ৳ {{ number_format($order->subtotal) }}. The total and the due amount are recalculated, and the invoice shows the new values. With a delivery charge of 0 the invoice shows "Free Delivery".@if ($order->consignment_id) This order was already sent to the courier, so the amount the courier collects is not changed here.@endif</p>
+    </section>
+  @endif
+
   @if ($order->isBkash())
     @php $bkOk = $order->bkashVerified(); @endphp
     <section class="ad-card">
@@ -237,7 +256,7 @@
         @if ($order->discount > 0)
           <tr><td colspan="3" class="r">Discount @if ($order->coupon_code)<span class="ad-st st-confirmed">{{ $order->coupon_code }}</span>@endif</td><td class="r ad-green">− ৳ {{ number_format($order->discount) }}</td></tr>
         @endif
-        <tr><td colspan="3" class="r">Delivery charge</td><td class="r">৳ {{ number_format($order->delivery_charge) }}</td></tr>
+        <tr><td colspan="3" class="r">Delivery charge</td><td class="r">@if ($order->delivery_charge > 0)৳ {{ number_format($order->delivery_charge) }}@else Free delivery @endif</td></tr>
         <tr class="ad-total"><td colspan="3" class="r">Total</td><td class="r">৳ {{ number_format($order->total) }}</td></tr>
       </table>
     </div>

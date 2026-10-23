@@ -160,6 +160,10 @@ class OrderCreateController extends Controller
             'address'        => 'required|string|max:500',
             'note'           => 'nullable|string|max:500',
             'coupon_code'    => 'nullable|string|max:30',
+            'delivery_charge' => 'nullable|integer|min:0|max:100000',
+            'discount_amount' => 'nullable|integer|min:0|max:10000000',
+            'bkash_amount'   => 'nullable|integer|min:1|max:10000000',
+            'bkash_trx_id'   => ['nullable', 'string', 'max:100', Rule::unique('payments', 'trx_id')],
             'client_token'   => 'required|string|max:64',
             'source_order_id' => 'nullable|integer',
             'address_id'     => 'nullable|integer',
@@ -177,6 +181,10 @@ class OrderCreateController extends Controller
             'city.required'     => 'Please enter the city or town.',
             'address.required'  => 'Please enter the delivery address.',
             'items.required'    => 'Please add at least one product.',
+            'delivery_charge.integer' => 'The delivery charge must be a whole number of taka.',
+            'discount_amount.integer' => 'The discount must be a whole number of taka.',
+            'bkash_amount.integer'    => 'The bKash amount must be a whole number of taka.',
+            'bkash_trx_id.unique'     => 'This bKash transaction ID has already been recorded.',
             'items.min'         => 'Please add at least one product.',
         ]);
 
@@ -187,6 +195,10 @@ class OrderCreateController extends Controller
         // Links are only kept when they are real: a made-up id is simply ignored
         $data['source_order_id'] = !empty($data['source_order_id']) && Order::whereKey($data['source_order_id'])->exists() ? (int) $data['source_order_id'] : null;
         $data['address_id']      = $this->ownAddressId($data['phone'], $data['address_id'] ?? null);
+
+        // Typed by the admin: blank delivery charge = the automatic zone price, 0 = free delivery
+        $data['delivery_override'] = $data['delivery_charge'] ?? null;
+        $data['manual_discount']   = (int) ($data['discount_amount'] ?? 0);
 
         $lines = [];
         foreach ($data['items'] as $row) {

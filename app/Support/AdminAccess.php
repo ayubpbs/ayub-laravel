@@ -51,6 +51,7 @@ class AdminAccess
             'admin.logout'          => self::OPEN,
             'admin.dashboard'       => 'dashboard',
             'admin.orders.status'   => 'orders_manage',
+            'admin.orders.charges'  => 'orders_manage',
             // Phase 4: these must stay ABOVE 'admin.orders.*' (first match wins)
             'admin.orders.create'   => 'orders_create',
             'admin.orders.create.*' => 'orders_create',
@@ -83,6 +84,7 @@ class AdminAccess
             'admin.reports.*'       => 'reports',
             'admin.accounting.*'    => 'accounting',
             'admin.settings.*'      => self::OWNER,
+            'admin.menu.*'          => self::OWNER,
             'admin.staff.*'         => self::OWNER,
         ];
 

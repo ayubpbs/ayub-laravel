@@ -11,7 +11,8 @@
         @if (empty($item['children']))
           <li class="nav-item">
             <a class="nav-link @if ($item['active']) is-active @endif" href="{{ $item['url'] }}"
-               @if ($item['active']) aria-current="page" @endif>{{ $item['label'] }}</a>
+               @if ($item['active']) aria-current="page" @endif
+               @if (!empty($item['new_tab'])) target="_blank" rel="noopener" @endif>{{ $item['label'] }}</a>
           </li>
         @else
           <li class="nav-item has-sub @if ($item['active']) is-active @endif">
@@ -23,7 +24,8 @@
               @foreach ($item['children'] as $child)
                 <li>
                   <a class="mega-link @if ($child['active']) is-active @endif" href="{{ $child['url'] }}"
-                     @if ($child['active']) aria-current="page" @endif>{{ $child['label'] }}</a>
+                     @if ($child['active']) aria-current="page" @endif
+                     @if (!empty($child['new_tab'])) target="_blank" rel="noopener" @endif>{{ $child['label'] }}</a>
                 </li>
               @endforeach
             </ul>

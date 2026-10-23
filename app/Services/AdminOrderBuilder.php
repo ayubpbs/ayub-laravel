@@ -6,6 +6,7 @@ use App\Models\Coupon;
 use App\Models\CustomerProfile;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Support\AdminAccess;
 use App\Support\Audit;
@@ -32,6 +33,8 @@ class AdminOrderBuilder
      *                     as it is, instead of street + city + upazila + district), free_items (every line costs 0),
      *                     credit (taka taken off for returned goods, exchange), delivery_override (taka, no zone price),
      *                     allow_unpublished (the product may be hidden from the shop but must have stock)
+     *                     Admin form extras, all optional: manual_discount (taka off the subtotal, added to any coupon),
+     *                     bkash_amount + bkash_trx_id (a bKash payment the admin received, recorded with the order)
      * @param array $items [product_id => quantity]
      * @return array [Order $order, bool $created]  $created is false when the same form was sent twice
      *
@@ -79,9 +82,12 @@ class AdminOrderBuilder
         $hidden      = !empty($data['allow_unpublished']);
         $claimId     = !empty($data['service_request_id']) ? (int) $data['service_request_id'] : null;
         $deliveryFix = array_key_exists('delivery_override', $data) && $data['delivery_override'] !== null ? max(0, (int) $data['delivery_override']) : null;
+        $manualDisc  = $isClaim ? 0 : max(0, (int) ($data['manual_discount'] ?? 0));
+        $bkashAmount = $isClaim ? 0 : max(0, (int) ($data['bkash_amount'] ?? 0));
+        $bkashTrx    = trim((string) ($data['bkash_trx_id'] ?? ''));
 
         try {
-            $order = DB::transaction(function () use ($data, $cart, $token, $byId, $byName, $type, $isClaim, $free, $credit, $hidden, $claimId, $deliveryFix) {
+            $order = DB::transaction(function () use ($data, $cart, $token, $byId, $byName, $type, $isClaim, $free, $credit, $hidden, $claimId, $deliveryFix, $manualDisc, $bkashAmount, $bkashTrx) {
                 // Lock the products so stock stays correct if a customer buys at the same time
                 $products = Product::whereIn('id', array_keys($cart))->lockForUpdate()->get()->keyBy('id');
 
@@ -135,7 +141,16 @@ class AdminOrderBuilder
                     $discount = min($credit, $subtotal);
                 }
 
+                // Discount typed by the admin (on top of a coupon, never more than the subtotal)
+                if ($manualDisc > 0) {
+                    $discount = min($subtotal, $discount + $manualDisc);
+                }
+
                 $delivery = $deliveryFix !== null ? $deliveryFix : Cart::delivery($subtotal, $data['district']);
+
+                if ($bkashAmount > $subtotal - $discount + $delivery) {
+                    throw new \RuntimeException('The bKash amount (৳ ' . number_format($bkashAmount) . ') is more than the order total (৳ ' . number_format($subtotal - $discount + $delivery) . ').');
+                }
 
                 $order = Order::create([
                     'name'            => $data['name'],
@@ -154,16 +169,31 @@ class AdminOrderBuilder
                     'delivery_charge' => $delivery,
                     'total'           => $subtotal - $discount + $delivery,
                     'status'          => 'pending',
-                    'payment_method'  => 'cod',
+                    'payment_method'  => $bkashAmount > 0 ? 'bkash' : 'cod',
                     'created_by_id'   => $byId,
                     'created_by_name' => $byName,
                     'source_order_id' => $data['source_order_id'] ?? null,
                     'address_id'      => $data['address_id'] ?? null,
                     'client_token'    => $token !== '' ? $token : null,
                     'order_type'      => $type,
-                ] + ($claimId ? ['service_request_id' => $claimId] : []));
+                ] + ($claimId ? ['service_request_id' => $claimId] : [])
+                  + ($bkashAmount > 0 ? ['bkash_amount' => $bkashAmount, 'bkash_trx_id' => $bkashTrx !== '' ? $bkashTrx : null] : []));
 
                 $order->items()->createMany($rows);
+
+                // A bKash amount entered by the admin is recorded as a real payment (shows on the invoice as Paid / Due)
+                if ($bkashAmount > 0) {
+                    $payment = Payment::create([
+                        'order_id' => $order->id,
+                        'type'     => 'payment',
+                        'method'   => 'bkash',
+                        'amount'   => $bkashAmount,
+                        'trx_id'   => $bkashTrx !== '' ? $bkashTrx : null,
+                        'note'     => 'bKash amount entered by admin when creating the order',
+                        'paid_at'  => now(),
+                    ]);
+                    $order->update(['bkash_payment_id' => $payment->id]);
+                }
 
                 return $order;
             });
