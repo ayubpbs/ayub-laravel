@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="{{ asset('assets/css/shop.css') }}">
   <link rel="stylesheet" href="{{ asset('assets/css/nav.css') }}">
   <link rel="stylesheet" href="{{ asset('assets/css/footer.css') }}">
+  <link rel="stylesheet" href="{{ asset('assets/css/mobile-nav.css') }}">
   @stack('head')
 </head>
 <body>
@@ -41,6 +42,7 @@
 </main>
 
 @include('partials.footer')
+@include('partials.mobile-bottom-nav')
 
 <div class="toast" id="toast" hidden></div>
 <script src="{{ asset('assets/js/shop.js') }}"></script>
