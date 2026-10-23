@@ -225,7 +225,7 @@
           <tr>
             <td>{{ $item->title }}
               @if ($item->warranty_source && $item->warranty_type && $item->warranty_type !== 'none' && $item->warranty_days)
-                <br><small class="ad-muted">🛡 {{ \App\Support\WarrantyPolicy::typeLabel($item->warranty_type) }}, {{ $item->warranty_days }} days@if ($order->delivered_at) (until {{ $order->delivered_at->copy()->addDays((int) $item->warranty_days)->format('d M Y') }})@endif</small>
+                <br><small class="ad-muted">🛡 {{ \App\Support\WarrantyPolicy::typeLabel($item->warranty_type) }}, {{ $item->warranty_days }} days @if ($order->delivered_at) (until {{ $order->delivered_at->copy()->addDays((int) $item->warranty_days)->format('d M Y') }})@endif</small>
               @endif
             </td>
             <td>৳ {{ number_format($item->price) }}</td>

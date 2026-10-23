@@ -12,6 +12,9 @@
     <div class="ad-stat"><span class="n">{{ $stats['today'] }}</span><span class="l">Today's orders</span></div>
     <div class="ad-stat"><span class="n">{{ $stats['orders'] }}</span><span class="l">Total orders</span></div>
     <div class="ad-stat"><span class="n">৳ {{ number_format($stats['delivered']) }}</span><span class="l">Delivered sales</span></div>
+    @if ($stats['claim_orders'] > 0)
+      <a class="ad-stat" href="{{ route('admin.orders.index', ['type' => 'claim']) }}"><span class="n">{{ $stats['claim_orders'] }}</span><span class="l">Exchange / replacement orders ({{ $stats['claim_orders_open'] }} open) — not counted as sales</span></a>
+    @endif
     <a class="ad-stat" href="{{ route('admin.products.index') }}"><span class="n">{{ $stats['products'] }}</span><span class="l">Total products</span></a>
     @if ($stockSummary)
       <a class="ad-stat" href="{{ route('admin.products.index') }}"><span class="n">৳ {{ number_format($stockSummary['value']) }}</span><span class="l">Stock value (at buying price)</span></a>

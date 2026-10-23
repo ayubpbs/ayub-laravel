@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Coupon;
 use App\Models\CustomerProfile;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
 use App\Support\AdminAccess;
 use App\Support\Audit;
@@ -107,7 +108,9 @@ class AdminOrderBuilder
                         'price'      => $unit,
                         'quantity'   => $qty,
                         'line_total' => $lineTotal,
-                    ] + ($warrantyOn ? WarrantyPolicy::snapshotFor($p) : []);
+                    ] + ($warrantyOn ? WarrantyPolicy::snapshotFor($p) : [])
+                      // Buying price snapshot for the Profit / Loss report (free items still cost the shop their real buying price)
+                      + (OrderItem::hasCostColumn() ? ['cost_price' => $p->cost_price] : []);
 
                     $p->decrement('stock_quantity', $qty);
                 }

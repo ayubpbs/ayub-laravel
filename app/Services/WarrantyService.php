@@ -167,7 +167,7 @@ class WarrantyService
                 'serial_number'         => $this->clean($d['serial_number'] ?? null, 100),
                 'return_required'       => true,
                 'opened_by_id'          => $staff ? $staff->id : null,
-                'opened_by_name'        => AdminAccess::name(),
+                'opened_by_name'        => !empty($d['opened_by_name']) ? (string) $d['opened_by_name'] : AdminAccess::name(),
                 'warranty_type'         => $a['policy']['type'],
                 'warranty_days'         => $a['policy']['days'] > 0 ? $a['policy']['days'] : null,
                 'warranty_terms'        => $a['policy']['terms'],
@@ -196,7 +196,8 @@ class WarrantyService
         $this->log($claim, $claim->status === 'open' ? 'warranty.opened' : 'warranty.opened_rejected',
             'Warranty claim #' . $claim->id . ' for order #' . $claim->order_id . ($claim->status === 'open' ? ' opened' : ' recorded as rejected (' . $claim->warranty_state . ')'),
             null,
-            ['order_id' => $claim->order_id, 'state' => $claim->warranty_state, 'policy' => $claim->warranty_type, 'days' => $claim->warranty_days, 'expires' => optional($claim->warranty_expires_at)->toDateString()]
+            ['order_id' => $claim->order_id, 'state' => $claim->warranty_state, 'policy' => $claim->warranty_type, 'days' => $claim->warranty_days, 'expires' => optional($claim->warranty_expires_at)->toDateString()],
+            !empty($d['opened_by_name']) ? (string) $d['opened_by_name'] : null
         );
 
         return $claim;
@@ -461,9 +462,9 @@ class WarrantyService
         return $v === '' ? null : Str::limit($v, $max, '');
     }
 
-    private function log(ServiceRequest $claim, string $action, string $summary, ?array $old = null, ?array $new = null): void
+    private function log(ServiceRequest $claim, string $action, string $summary, ?array $old = null, ?array $new = null, ?string $actor = null): void
     {
         // subject_type "claim" like the exchange claims, so the History box of the claim page shows these lines too
-        Audit::log($action, 'claim', $claim->id, $summary, $old, $new, $claim->customer_phone);
+        Audit::log($action, 'claim', $claim->id, $summary, $old, $new, $claim->customer_phone, $actor);
     }
 }

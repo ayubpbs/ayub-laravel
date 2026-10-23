@@ -18,9 +18,18 @@
           <option value="warranty" {{ $kind === 'warranty' ? 'selected' : '' }}>Warranty claims</option>
           <option value="exchange" {{ $kind === 'exchange' ? 'selected' : '' }}>Exchange / wrong product</option>
         </select>
+        <select name="type">
+          <option value="">Any claim type</option>
+          @foreach (\App\Models\ServiceRequest::allTypes() as $k => $label)
+            <option value="{{ $k }}" {{ $type === $k ? 'selected' : '' }}>{{ $label }}</option>
+          @endforeach
+        </select>
+        <input type="text" name="product" value="{{ $product }}" placeholder="Product">
+        <input type="date" name="from" value="{{ $from }}" title="From date">
+        <input type="date" name="to" value="{{ $to }}" title="To date">
         <input type="text" name="q" value="{{ $q }}" placeholder="Search name, mobile, claim or order no.">
         <button type="submit" class="ad-btn">Search</button>
-        @if ($q !== '')<a class="ad-btn ad-btn-gray" href="{{ route('admin.claims.index', array_filter(['status' => $status, 'kind' => $kind])) }}">Clear</a>@endif
+        @if ($q !== '' || $type !== '' || $product !== '' || $from !== '' || $to !== '')<a class="ad-btn ad-btn-gray" href="{{ route('admin.claims.index', array_filter(['status' => $status, 'kind' => $kind])) }}">Clear</a>@endif
       </form>
       @if ($ax::can('claims_manage'))
         <a class="ad-btn" href="{{ route('admin.claims.create') }}">+ New claim</a>

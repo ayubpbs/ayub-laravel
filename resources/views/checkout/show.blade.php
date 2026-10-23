@@ -241,10 +241,10 @@
             <input type="checkbox" name="terms" value="1" id="f-terms" required {{ $termsChecked ? 'checked' : '' }}>
             <span class="box"><svg class="ico"><use href="#i-check"/></svg></span>
             <span class="txt">I agree to the
-              <a href="https://ayub365.com/terms.php" target="_blank" rel="noopener">Terms &amp; Conditions</a>,
-              <a href="https://ayub365.com/privacy.php" target="_blank" rel="noopener">Privacy Policy</a>,
-              <a href="https://ayub365.com/return-policy.php" target="_blank" rel="noopener">Return Policy</a> and
-              <a href="https://ayub365.com/delivery-policy.php" target="_blank" rel="noopener">Delivery Policy</a>.
+              <a href="{{ route('page.terms') }}" target="_blank" rel="noopener">Terms &amp; Conditions</a>,
+              <a href="{{ route('page.privacy') }}" target="_blank" rel="noopener">Privacy Policy</a>,
+              <a href="{{ route('page.return') }}" target="_blank" rel="noopener">Return Policy</a> and
+              <a href="{{ route('page.delivery') }}" target="_blank" rel="noopener">Delivery Policy</a>.
             </span>
           </label>
           @error('terms')<p class="co-err">{{ $message }}</p>@enderror

@@ -65,6 +65,7 @@
             ['label' => 'Returned Orders',     'url' => route('admin.reports.orders', 'returned'),  'on' => request()->routeIs('admin.reports.orders') && request()->route('status') === 'returned'],
         ]],
         ['perm' => 'accounting', 'label' => 'Accounting', 'icon' => '💰', 'view' => 'admin.partials.accounting-menu'],
+        ['perm' => 'owner', 'label' => 'Audit Log', 'icon' => '📝', 'url' => \Illuminate\Support\Facades\Route::has('admin.audit.index') ? route('admin.audit.index') : null, 'on' => request()->routeIs('admin.audit.*')],
         ['perm' => 'owner', 'label' => 'Staff & Permissions', 'icon' => '🛡️', 'url' => \Illuminate\Support\Facades\Route::has('admin.staff.index') ? route('admin.staff.index') : null, 'on' => request()->routeIs('admin.staff.*')],
         ['perm' => 'orders_view', 'label' => 'Notifications', 'icon' => '🔔', 'url' => route('admin.notifications.index'), 'on' => request()->routeIs('admin.notifications.*'), 'badge' => $unreadNotif],
         ['perm' => 'owner', 'label' => 'Settings', 'icon' => '⚙️', 'url' => route('admin.settings.edit'), 'on' => request()->routeIs('admin.settings.*')],

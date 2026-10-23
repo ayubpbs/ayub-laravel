@@ -20,7 +20,8 @@ class Audit
         string $summary,
         ?array $old = null,
         ?array $new = null,
-        ?string $customerPhone = null
+        ?string $customerPhone = null,
+        ?string $actorName = null   // set when the action is not done by a logged-in admin (e.g. a customer on the website)
     ): void {
         try {
             if (!AuditLog::tableReady()) {
@@ -31,7 +32,7 @@ class Audit
 
             AuditLog::create([
                 'actor_id'       => $staff ? $staff->id : null,
-                'actor_name'     => AdminAccess::name(),
+                'actor_name'     => $actorName ?: AdminAccess::name(),
                 'action'         => $action,
                 'subject_type'   => $subjectType,
                 'subject_id'     => $subjectId,

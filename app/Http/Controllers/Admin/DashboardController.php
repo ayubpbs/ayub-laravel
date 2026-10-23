@@ -15,7 +15,10 @@ class DashboardController extends Controller
             // Replacement / exchange orders made from a claim are not counted as new orders
             'today'     => Order::salesOrders()->whereDate('created_at', today())->count(),
             'orders'    => Order::salesOrders()->count(),
-            'delivered' => (int) Order::where('status', 'delivered')->sum('total'),
+            // Delivered SALES: replacement / exchange orders are not sales, they are shown on their own card
+            'delivered' => (int) Order::salesOrders()->where('status', 'delivered')->sum('total'),
+            'claim_orders'      => Order::hasAdminColumns() ? Order::whereIn('order_type', ['replacement', 'exchange'])->count() : 0,
+            'claim_orders_open' => Order::hasAdminColumns() ? Order::whereIn('order_type', ['replacement', 'exchange'])->whereNotIn('status', ['delivered', 'cancelled', 'returned'])->count() : 0,
             'products'  => Product::count(),
         ];
 

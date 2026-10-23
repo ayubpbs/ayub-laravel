@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Coupon;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
 use App\Support\BdLocations;
 use App\Support\Cart;
@@ -181,10 +182,9 @@ class CheckoutController extends Controller
                         'product_id' => $p->id,
                         'title'      => $p->title,
                         'price'      => $p->price,
-                        'cost_price' => $p->cost_price,
                         'quantity'   => $qty,
                         'line_total' => $lineTotal,
-                    ];
+                    ] + (OrderItem::hasCostColumn() ? ['cost_price' => $p->cost_price] : []);   // buying price snapshot for the Profit / Loss report
 
                     $p->decrement('stock_quantity', $qty);
                 }

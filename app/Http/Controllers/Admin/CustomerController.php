@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\CustomerAddress;
 use App\Models\CustomerProfile;
 use App\Models\Order;
+use App\Models\ServiceRequest;
 use App\Support\AdminAccess;
 use App\Support\Audit;
 use App\Support\Phone;
@@ -34,7 +35,7 @@ class CustomerController extends Controller
             return redirect()->route('admin.customers.show', $norm);
         }
 
-        $query = Order::select(
+        $query = Order::salesOrders()->select(     // replacement / exchange orders are not counted as customer orders
             'phone',
             DB::raw('count(*) as orders_count'),
             DB::raw("sum(case when status = 'delivered' then total else 0 end) as delivered_total"),
@@ -75,9 +76,9 @@ class CustomerController extends Controller
         $latest = Order::whereIn('id', $customers->pluck('last_order_id'))->get()->keyBy('id');
 
         $summary = [
-            'customers' => Order::distinct()->count('phone'),
-            'repeat'    => DB::table('orders')->select('phone')->groupBy('phone')->havingRaw('count(*) > 1')->get()->count(),
-            'new_month' => DB::table('orders')->select('phone')->groupBy('phone')
+            'customers' => Order::salesOrders()->distinct()->count('phone'),
+            'repeat'    => $this->salesOnly(DB::table('orders'))->select('phone')->groupBy('phone')->havingRaw('count(*) > 1')->get()->count(),
+            'new_month' => $this->salesOnly(DB::table('orders'))->select('phone')->groupBy('phone')
                 ->havingRaw('min(created_at) >= ?', [now()->startOfMonth()])->get()->count(),
         ];
 
@@ -112,11 +113,14 @@ class CustomerController extends Controller
         $latest = $orders->first();
         $name   = $latest->name ?? $profile->name ?? $imported->name ?? $norm;
 
+        // The numbers are real purchases: replacement / exchange orders are listed in the history but counted apart
+        $sales = $orders->reject(fn ($o) => $o->isClaimOrder());
         $stats = [
-            'orders'    => $orders->count(),
-            'delivered' => $orders->where('status', 'delivered')->count(),
-            'failed'    => $orders->whereIn('status', Order::lockedStatuses())->count(),
-            'spent'     => (int) $orders->where('status', 'delivered')->sum('total'),
+            'orders'       => $sales->count(),
+            'delivered'    => $sales->where('status', 'delivered')->count(),
+            'failed'       => $sales->whereIn('status', Order::lockedStatuses())->count(),
+            'spent'        => (int) $sales->where('status', 'delivered')->sum('total'),
+            'claim_orders' => $orders->count() - $sales->count(),
             'first'     => $orders->isNotEmpty() ? $orders->last()->created_at : null,
         ];
         $names     = $orders->pluck('name')->push($profile->name ?? null)->push($imported->name ?? null)->filter()->unique()->values();
@@ -125,7 +129,12 @@ class CustomerController extends Controller
         $saved    = ($profile && CustomerAddress::tableReady()) ? $profile->addresses()->orderByDesc('is_default')->orderBy('id')->get() : collect();
         $activity = AuditLog::tableReady() ? AuditLog::where('customer_phone', $norm)->latest('id')->limit(15)->get() : collect();
 
-        return view('admin.customers.show', compact('orders', 'latest', 'stats', 'names', 'addresses', 'profile', 'imported', 'name', 'saved', 'activity') + ['phone' => $norm]);
+        // Exchange, wrong-product and warranty claims of this customer (staff with "Claims: view" only)
+        $claims = (ServiceRequest::tableReady() && AdminAccess::can('claims_view'))
+            ? ServiceRequest::with('items')->whereIn('customer_phone', $variants)->latest('id')->limit(50)->get()
+            : collect();
+
+        return view('admin.customers.show', compact('orders', 'latest', 'stats', 'names', 'addresses', 'profile', 'imported', 'name', 'saved', 'activity', 'claims') + ['phone' => $norm]);
     }
 
     public function create(Request $request)
@@ -171,6 +180,14 @@ class CustomerController extends Controller
     }
 
     // ----- Helpers -----
+
+    /** Only real customer orders (no replacement / exchange orders) in a plain DB query */
+    private function salesOnly($query)
+    {
+        return Order::hasAdminColumns()
+            ? $query->where(fn ($w) => $w->whereNull('order_type')->orWhere('order_type', 'normal'))
+            : $query;
+    }
 
     /** True when the number has orders, a profile or an imported old-customer record */
     private function phoneKnown(string $norm): bool

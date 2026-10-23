@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\ClaimController;
 use App\Http\Controllers\Admin\CustomerAddressController;
 use App\Http\Controllers\Admin\CustomerController;
@@ -61,4 +62,7 @@ Route::prefix('admin')->name('admin.')->middleware(AdminAuth::class)->group(func
     Route::post('claims/{id}/warranty/inspect', [$w, 'inspect'])->whereNumber('id')->name('claims.warranty.inspect');
     Route::post('claims/{id}/warranty/resolve', [$w, 'resolve'])->whereNumber('id')->name('claims.warranty.resolve');
     Route::post('claims/{id}/warranty/serials', [$w, 'serials'])->whereNumber('id')->name('claims.warranty.serials');
+
+    // Phase 7: audit log. This route name is NOT in the permission map of App\Support\AdminAccess, so only the owner can open it.
+    Route::get('audit', [AuditController::class, 'index'])->name('audit.index');
 });

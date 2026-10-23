@@ -22,6 +22,30 @@ class OrderController extends Controller
             $status = '';
         }
 
+        // Phase 7 filters: order type, date range, product
+        $type = (string) $request->query('type', '');
+        if (Order::hasAdminColumns() && $type === 'normal') {
+            $query->salesOrders();
+        } elseif (Order::hasAdminColumns() && in_array($type, ['replacement', 'exchange'], true)) {
+            $query->where('order_type', $type);
+        } elseif (Order::hasAdminColumns() && $type === 'claim') {
+            $query->whereIn('order_type', ['replacement', 'exchange']);
+        } else {
+            $type = '';
+        }
+        $from = $this->dateOrEmpty($request->query('from'));
+        $to   = $this->dateOrEmpty($request->query('to'));
+        if ($from !== '') {
+            $query->whereDate('created_at', '>=', $from);
+        }
+        if ($to !== '') {
+            $query->whereDate('created_at', '<=', $to);
+        }
+        $product = trim((string) $request->query('product', ''));
+        if ($product !== '') {
+            $query->whereHas('items', fn ($i) => $i->where('title', 'like', "%{$product}%"));
+        }
+
         $search = trim((string) $request->query('q', ''));
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
@@ -34,7 +58,14 @@ class OrderController extends Controller
         $orders = $query->paginate(20)->withQueryString();
         $counts = Order::select('status', DB::raw('count(*) as c'))->groupBy('status')->pluck('c', 'status');
 
-        return view('admin.orders.index', compact('orders', 'counts', 'status', 'search'));
+        return view('admin.orders.index', compact('orders', 'counts', 'status', 'search', 'type', 'from', 'to', 'product'));
+    }
+
+    private function dateOrEmpty($value): string
+    {
+        $value = trim((string) $value);
+
+        return $value !== '' && strtotime($value) !== false ? date('Y-m-d', strtotime($value)) : '';
     }
 
     public function show($id)

@@ -22,6 +22,7 @@ class AdminNotification extends Model
             'low_stock'       => ['Low Stock',       '⚠️', 'nt-stock'],
             'return'          => ['Return',          '↩️', 'nt-return'],
             'payment'         => ['Payment',         '💳', 'nt-payment'],
+            'warranty_claim'  => ['Warranty Claim',  '🛡️', 'nt-return'],
         ];
     }
 

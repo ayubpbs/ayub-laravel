@@ -11,6 +11,12 @@
     <div class="ad-stat"><span class="n">{{ $stats['delivered'] }}</span><span class="l">Delivered</span></div>
     <div class="ad-stat {{ $stats['failed'] > 0 ? 'ad-stat-hot' : '' }}"><span class="n">{{ $stats['failed'] }}</span><span class="l">Cancelled / Returned</span></div>
     <div class="ad-stat"><span class="n">৳ {{ number_format($stats['spent']) }}</span><span class="l">Delivered total</span></div>
+    @if ($stats['claim_orders'] > 0)
+      <div class="ad-stat"><span class="n">{{ $stats['claim_orders'] }}</span><span class="l">Exchange / replacement orders (not counted above)</span></div>
+    @endif
+    @if ($claims->isNotEmpty())
+      <div class="ad-stat"><span class="n">{{ $claims->count() }}</span><span class="l">Claims (exchange / warranty)</span></div>
+    @endif
   </div>
 
   <div class="ad-two">
@@ -105,7 +111,11 @@
         <tr><th>No.</th><th>Date</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Courier</th><th></th></tr>
         @foreach ($orders as $o)
           <tr>
-            <td><a href="{{ route('admin.orders.show', $o->id) }}"><strong>#{{ $o->id }}</strong></a></td>
+            <td>
+              <a href="{{ route('admin.orders.show', $o->id) }}"><strong>#{{ $o->id }}</strong></a>
+              @if ($o->isClaimOrder())<br><span class="ad-st st-courier_sent">{{ $o->typeLabel() }}</span>@endif
+              @if ($o->source_order_id && !$o->isClaimOrder())<br><small class="ad-muted">reorder of #{{ $o->source_order_id }}</small>@endif
+            </td>
             <td>{{ $o->created_at->format('d M Y, h:i A') }}</td>
             <td>
               @foreach ($o->items as $i)
@@ -123,13 +133,42 @@
                 —
               @endif
             </td>
-            <td><a class="ad-link" href="{{ route('admin.orders.show', $o->id) }}">View</a></td>
+            <td class="ad-actions">
+              <a class="ad-link" href="{{ route('admin.orders.show', $o->id) }}">View</a>
+              @if (!$o->isClaimOrder() && \App\Support\AdminAccess::can('orders_create'))
+                <a class="ad-link" href="{{ route('admin.orders.create', ['reorder' => $o->id]) }}">↻ Reorder</a>
+              @endif
+            </td>
           </tr>
         @endforeach
       </table>
     </div>
     @endif
   </section>
+
+  {{-- Exchange, wrong-product and warranty claims of this customer --}}
+  @if ($claims->isNotEmpty())
+    <section class="ad-card">
+      <h2>Claims — exchange &amp; warranty</h2>
+      <div class="ad-scroll">
+        <table class="ad-table">
+          <tr><th>Claim</th><th>Type</th><th>Order</th><th>Product</th><th>Status</th><th>Solution</th><th>Opened</th></tr>
+          @foreach ($claims as $c)
+            <tr>
+              <td><a href="{{ route('admin.claims.show', $c->id) }}"><strong>#{{ $c->id }}</strong></a></td>
+              <td>{{ $c->typeLabel() }}</td>
+              <td><a class="ad-link" href="{{ route('admin.orders.show', $c->order_id) }}">#{{ $c->order_id }}</a>
+                @if ($c->replacement_order_id)<br><small class="ad-muted">→ <a class="ad-link" href="{{ route('admin.orders.show', $c->replacement_order_id) }}">#{{ $c->replacement_order_id }}</a></small>@endif</td>
+              <td>@foreach ($c->items as $i)<div>{{ $i->title }} × {{ $i->quantity }}</div>@endforeach</td>
+              <td><span class="ad-st {{ \App\Models\ServiceRequest::badge($c->status) }}">{{ $c->statusLabel() }}</span></td>
+              <td>{{ $c->resolutionLabel() }}</td>
+              <td>{{ $c->created_at->format('d M Y') }}</td>
+            </tr>
+          @endforeach
+        </table>
+      </div>
+    </section>
+  @endif
 
   @if ($activity->isNotEmpty())
     <section class="ad-card">

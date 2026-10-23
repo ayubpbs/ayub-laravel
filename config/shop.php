@@ -36,4 +36,19 @@ return [
     'steadfast_key'      => env('STEADFAST_API_KEY', ''),
     'steadfast_secret'   => env('STEADFAST_SECRET_KEY', ''),
     'steadfast_base_url' => env('STEADFAST_BASE_URL', 'https://portal.packzy.com/api/v1'),
+
+    // Shown in the website footer and on the policy pages (Ayub Tech Shop contact details).
+    // A value in .env (SHOP_PHONE, SHOP_EMAIL, SHOP_ADDRESS) wins over the default written here.
+    'contact' => [
+        'phone'    => env('SHOP_PHONE') ?: '09638-604020',
+        'email'    => env('SHOP_EMAIL') ?: 'ayub.pbs@gmail.com',
+        'address'  => env('SHOP_ADDRESS') ?: 'মাওনা, গাজীপুর',
+        'whatsapp' => '8801711302759',   // international format, digits only
+        'social'   => [
+            'facebook'  => 'https://www.facebook.com/ayubpbs/',
+            'youtube'   => 'https://www.youtube.com/@ayubtechshop',
+            'tiktok'    => 'https://www.tiktok.com/@ayub365.t',
+            'instagram' => 'https://www.instagram.com/ayub.pbs/',
+        ],
+    ],
 ];

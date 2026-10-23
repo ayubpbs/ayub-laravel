@@ -34,15 +34,26 @@ class ClaimController extends Controller
 
     // ------------------------------------------------------------------ list
 
+    private function dateOrEmpty($value): string
+    {
+        $value = trim((string) $value);
+
+        return $value !== '' && strtotime($value) !== false ? date('Y-m-d', strtotime($value)) : '';
+    }
+
     public function index(Request $request)
     {
         $ready  = ServiceRequest::tableReady();
         $status = (string) $request->query('status', '');
         $q      = trim((string) $request->query('q', ''));
         $kind   = in_array($request->query('kind'), ['warranty', 'exchange'], true) ? (string) $request->query('kind') : '';
+        $type   = array_key_exists((string) $request->query('type'), ServiceRequest::allTypes()) ? (string) $request->query('type') : '';
+        $from   = $this->dateOrEmpty($request->query('from'));
+        $to     = $this->dateOrEmpty($request->query('to'));
+        $product = trim((string) $request->query('product', ''));
 
         if (!$ready) {
-            return view('admin.claims.index', ['ready' => false, 'claims' => null, 'counts' => collect(), 'status' => '', 'q' => '', 'kind' => '']);
+            return view('admin.claims.index', ['ready' => false, 'claims' => null, 'counts' => collect(), 'status' => '', 'q' => '', 'kind' => '', 'type' => '', 'from' => '', 'to' => '', 'product' => '']);
         }
 
         $query = ServiceRequest::with('order')->latest('id');
@@ -55,6 +66,18 @@ class ClaimController extends Controller
             $query->where('type', 'warranty');
         } elseif ($kind === 'exchange') {
             $query->where('type', '!=', 'warranty');
+        }
+        if ($type !== '') {
+            $query->where('type', $type);
+        }
+        if ($from !== '') {
+            $query->whereDate('created_at', '>=', $from);
+        }
+        if ($to !== '') {
+            $query->whereDate('created_at', '<=', $to);
+        }
+        if ($product !== '') {
+            $query->whereHas('items', fn ($i) => $i->where('title', 'like', "%{$product}%"));
         }
         if ($q !== '') {
             $query->where(function ($w) use ($q) {
@@ -73,6 +96,10 @@ class ClaimController extends Controller
             'status' => $status,
             'q'      => $q,
             'kind'   => $kind,
+            'type'   => $type,
+            'from'   => $from,
+            'to'     => $to,
+            'product' => $product,
         ]);
     }
 

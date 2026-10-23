@@ -6,6 +6,7 @@ use App\Models\AdminNotification;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Models\ServiceRequest;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -45,6 +46,14 @@ class Notify
         self::push('new_order', 'New order #' . $o->id,
             self::who($o) . ' — ৳ ' . number_format($o->total),
             ['order_id' => $o->id, 'url' => self::orderUrl($o)]);
+    }
+
+    /** A customer sent a warranty claim from the website */
+    public static function newWarrantyClaim(ServiceRequest $c): void
+    {
+        self::push('warranty_claim', 'New warranty claim #' . $c->id,
+            $c->customer_name . ' (' . $c->customer_phone . ') — order #' . $c->order_id,
+            ['order_id' => $c->order_id, 'url' => route('admin.claims.show', $c->id, false)]);
     }
 
     /** Called from Order::changeStatus() */

@@ -4,7 +4,10 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\TrackController;
+use App\Http\Controllers\WarrantyClaimController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -14,6 +17,20 @@ Route::get('/category/{id}', [CategoryController::class, 'show'])->name('categor
 Route::get('/product/{key}', [ProductController::class, 'show'])->name('product.show');
 Route::post('/product/{id}/review', [\App\Http\Controllers\ProductReviewController::class, 'store'])
     ->middleware('throttle:5,1')->name('product.review.store');
+
+// Policy pages (linked from the footer and the checkout)
+// Order tracking and customer warranty claims (both need the phone number AND the order number)
+Route::get('/track-order', [TrackController::class, 'show'])->name('track.show');
+Route::post('/track-order', [TrackController::class, 'lookup'])->middleware('throttle:15,1')->name('track.lookup');
+Route::get('/warranty-claim', [WarrantyClaimController::class, 'form'])->name('claim.form');
+Route::post('/warranty-claim/find', [WarrantyClaimController::class, 'find'])->middleware('throttle:15,1')->name('claim.find');
+Route::post('/warranty-claim', [WarrantyClaimController::class, 'store'])->middleware('throttle:6,10')->name('claim.store');
+
+Route::get('/terms', [PageController::class, 'terms'])->name('page.terms');
+Route::get('/privacy-policy', [PageController::class, 'privacy'])->name('page.privacy');
+Route::get('/return-policy', [PageController::class, 'returns'])->name('page.return');
+Route::get('/delivery-policy', [PageController::class, 'delivery'])->name('page.delivery');
+Route::get('/warranty', [PageController::class, 'warranty'])->name('page.warranty');
 
 // Cart
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');

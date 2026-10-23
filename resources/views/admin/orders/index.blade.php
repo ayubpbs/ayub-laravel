@@ -9,8 +9,18 @@
     <form method="GET" action="{{ route('admin.orders.index') }}" class="ad-filter" style="margin:0">
       @if ($status !== '')<input type="hidden" name="status" value="{{ $status }}">@endif
       <input type="text" name="q" value="{{ $search }}" placeholder="Search name, mobile or order no.">
+      <input type="text" name="product" value="{{ $product }}" placeholder="Product">
+      <select name="type">
+        <option value="">All order types</option>
+        <option value="normal" {{ $type === 'normal' ? 'selected' : '' }}>Normal orders (sales)</option>
+        <option value="claim" {{ $type === 'claim' ? 'selected' : '' }}>Exchange + replacement</option>
+        <option value="replacement" {{ $type === 'replacement' ? 'selected' : '' }}>Replacement only</option>
+        <option value="exchange" {{ $type === 'exchange' ? 'selected' : '' }}>Exchange only</option>
+      </select>
+      <input type="date" name="from" value="{{ $from }}" title="From date">
+      <input type="date" name="to" value="{{ $to }}" title="To date">
       <button type="submit" class="ad-btn">Search</button>
-      @if ($search !== '')<a class="ad-btn ad-btn-gray" href="{{ route('admin.orders.index', $status !== '' ? ['status' => $status] : []) }}">Clear</a>@endif
+      @if ($search !== '' || $product !== '' || $type !== '' || $from !== '' || $to !== '')<a class="ad-btn ad-btn-gray" href="{{ route('admin.orders.index', $status !== '' ? ['status' => $status] : []) }}">Clear</a>@endif
     </form>
   </div>
 
@@ -23,14 +33,17 @@
 
   <section class="ad-card">
     @if ($orders->isEmpty())
-      <p class="ad-muted">{{ $search !== '' ? 'No orders match your search.' : 'No orders.' }}</p>
+      <p class="ad-muted">{{ ($search !== '' || $product !== '' || $type !== '' || $from !== '' || $to !== '') ? 'No orders match your search.' : 'No orders.' }}</p>
     @else
       <div class="ad-scroll">
         <table class="ad-table">
           <tr><th>No.</th><th>Date</th><th>Customer</th><th>Mobile</th><th>Total</th><th>Payment</th><th>Status</th><th></th></tr>
           @foreach ($orders as $o)
             <tr>
-              <td><a href="{{ route('admin.orders.show', $o->id) }}"><strong>#{{ $o->id }}</strong></a></td>
+              <td>
+                <a href="{{ route('admin.orders.show', $o->id) }}"><strong>#{{ $o->id }}</strong></a>
+                @if ($o->isClaimOrder())<br><span class="ad-st st-courier_sent">{{ $o->typeLabel() }}</span>@endif
+              </td>
               <td>{{ $o->created_at->format('d M Y, h:i A') }}</td>
               <td>{{ $o->name }}</td>
               <td><a href="tel:{{ $o->phone }}">{{ $o->phone }}</a></td>
